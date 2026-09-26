@@ -247,11 +247,11 @@ export async function getReconciliationSummary(businessId: string, start: string
 
   const canonical = (order: any) => new Set([key(order.external_order_id), key(order.order_number), key(order.id)].filter(Boolean));
   const shippingKeys = new Set<string>();
-  for (const row of shipping.data ?? []) {
+  for (const row of (shipping.data ?? []) as any[]) {
     for (const value of [row.external_order_id, row.order_id, row.orders?.external_order_id, row.orders?.order_number]) if (key(value)) shippingKeys.add(key(value));
   }
   const checkoutKeys = new Set<string>();
-  for (const row of checkout.data ?? []) {
+  for (const row of (checkout.data ?? []) as any[]) {
     for (const value of [row.order_number, row.order_id, row.orders?.external_order_id, row.orders?.order_number]) if (key(value)) checkoutKeys.add(key(value));
   }
 
