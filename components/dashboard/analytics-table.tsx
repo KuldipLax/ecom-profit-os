@@ -1,6 +1,6 @@
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils/format";
 
-type Column<T> = { key: keyof T | string; label: string; type?: "currency" | "percent" | "number" | "text" };
+type Column<T> = { key: keyof T | string; label: string; type?: "currency" | "percent" | "number" | "text" | "x" };
 function read(obj:any,key:string){return key.split(".").reduce((a,k)=>a?.[k],obj)}
 export function AnalyticsTable<T extends Record<string,any>>({rows,columns,empty="No records for this period.",limit}: {rows:T[];columns:Column<T>[];empty?:string;limit?:number}){
   const shown=limit?rows.slice(0,limit):rows;
