@@ -51,7 +51,7 @@ export function ProfitSimulator({ actual, targetProfit }: { actual: any; targetP
     const effectiveMarketing = rawMeta + metaGst;
     const profit = deliveredRevenue - cogsValue - shippingValue - checkoutValue - pgValue - effectiveMarketing;
     const roas = effectiveMarketing ? deliveredRevenue / effectiveMarketing : 0;
-    return { gross, deliveredOrders, deliveredRevenue, cogsValue, shippingValue, checkoutValue, pgValue, rawMeta, metaGst, effectiveMarketing, profit, margin: deliveredRevenue ? profit / deliveredRevenue : 0, roas, dr, avg, unitCogs, ship, checkout, pg };
+    return { orders: o, gross, deliveredOrders, deliveredRevenue, cogsValue, shippingValue, checkoutValue, pgValue, rawMeta, metaGst, effectiveMarketing, profit, margin: deliveredRevenue ? profit / deliveredRevenue : 0, roas, dr, avg, unitCogs, ship, checkout, pg };
   }, [orders, aov, deliveryRate, cogs, shipping, checkoutRate, pgRate, metaSpend, metaGstRate]);
 
   const target = useMemo(() => {
