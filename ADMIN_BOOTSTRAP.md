@@ -5,7 +5,9 @@ Initial platform admins:
 - `info@bb24.in`
 - `bigbrand24@gmail.com`
 
-Before the first trusted seed run, set `SEED_ADMIN_PASSWORD` in the server environment to the temporary password documented in `BOOTSTRAP_ADMIN_CREDENTIALS.txt`. Do not commit that credential to Git. Change both admin passwords immediately after the first successful login. The seed script creates/updates these admin users and attaches them to the four initial businesses:
+Before the first trusted seed run, set a new strong `SEED_ADMIN_PASSWORD` in the server environment. Do not commit that credential to Git or place it in repository files. Change the admin password immediately after the first successful login.
+
+The seed script creates/updates these admin users and attaches them to the four initial businesses:
 
 - GS Ayurvedic
 - Rudraaye
