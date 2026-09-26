@@ -1,0 +1,5 @@
+import crypto from "node:crypto";
+import { requireServerSecret } from "@/lib/env";
+function key(){const raw=requireServerSecret("ENCRYPTION_KEY");if(/^[0-9a-fA-F]{64}$/.test(raw))return Buffer.from(raw,"hex");const b=Buffer.from(raw,"base64");if(b.length!==32)throw new Error("ENCRYPTION_KEY must decode to 32 bytes.");return b;}
+export function encryptSecret(value:string){const iv=crypto.randomBytes(12);const cipher=crypto.createCipheriv("aes-256-gcm",key(),iv);const encrypted=Buffer.concat([cipher.update(value,"utf8"),cipher.final()]);return `v1.${iv.toString("base64url")}.${cipher.getAuthTag().toString("base64url")}.${encrypted.toString("base64url")}`;}
+export function decryptSecret(value:string){const [v,ivS,tagS,dataS]=value.split(".");if(v!=="v1")throw new Error("Unsupported encrypted credential version.");const decipher=crypto.createDecipheriv("aes-256-gcm",key(),Buffer.from(ivS,"base64url"));decipher.setAuthTag(Buffer.from(tagS,"base64url"));return Buffer.concat([decipher.update(Buffer.from(dataS,"base64url")),decipher.final()]).toString("utf8");}

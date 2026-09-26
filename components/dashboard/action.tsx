@@ -1,0 +1,4 @@
+"use client";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+export function ActionButton({url,label,body}:{url:string;label:string;body?:any}){const [busy,setBusy]=useState(false),[msg,setMsg]=useState("");async function run(){setBusy(true);setMsg("");try{const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:body?JSON.stringify(body):undefined});const j=await r.json();if(!r.ok)throw new Error(j.error??"Action failed.");setMsg("Done. Refresh the page to see the latest result.");}catch(e:any){setMsg(e.message??"Action failed.")}finally{setBusy(false)}}return <div><Button size="sm" variant="secondary" onClick={run} disabled={busy}>{busy?"Working…":label}</Button>{msg&&<div className="mt-1 max-w-[240px] text-[10px] text-slate-500">{msg}</div>}</div>}

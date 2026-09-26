@@ -1,0 +1,8 @@
+{
+  "name":"ecom-profit-os",
+  "version":"1.0.0",
+  "private":true,
+  "scripts":{"dev":"next dev","build":"next build","start":"next start","lint":"eslint .","typecheck":"tsc --noEmit","test":"vitest run","test:watch":"vitest","seed":"tsx scripts/seed.ts"},
+  "dependencies":{"@supabase/ssr":"latest","@supabase/supabase-js":"latest","class-variance-authority":"latest","clsx":"latest","date-fns":"latest","decimal.js":"latest","lucide-react":"latest","next":"16.3.6","papaparse":"latest","react":"19.2.0","react-dom":"19.2.0","recharts":"latest","tailwind-merge":"latest","zod":"latest"},
+  "devDependencies":{"@types/node":"latest","@types/papaparse":"latest","@types/react":"latest","@types/react-dom":"latest","@tailwindcss/postcss":"latest","eslint":"latest","eslint-config-next":"16.3.6","jsdom":"latest","postcss":"latest","tailwindcss":"latest","tsx":"latest","typescript":"latest","vitest":"latest"}
+}

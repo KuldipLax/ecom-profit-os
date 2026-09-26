@@ -1,0 +1,1 @@
+import { AuthForm } from "@/components/forms/auth-form";export default function Page(){return <main className="min-h-screen bg-[#f7f8fa] flex items-center justify-center p-4"><AuthForm mode="admin-login"/></main>}

@@ -1,0 +1,1 @@
+import type { LabelHTMLAttributes } from "react";export function Label({className,...p}:LabelHTMLAttributes<HTMLLabelElement>){return <label className={`mb-1 block text-xs font-medium text-slate-600 ${className??""}`} {...p}/>}

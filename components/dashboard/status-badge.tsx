@@ -1,0 +1,2 @@
+import { Badge } from "@/components/ui/badge";
+export function StatusBadge({status}:{status:string}){const success=["connected","active","completed"];const warn=["syncing","partial","queued"];const danger=["failed","needs_reauthorization","inactive"];return <Badge variant={success.includes(status)?"success":warn.includes(status)?"warning":danger.includes(status)?"danger":"default"}>{status.replaceAll("_"," ")}</Badge>}

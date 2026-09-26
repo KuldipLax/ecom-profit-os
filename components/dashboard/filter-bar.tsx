@@ -1,0 +1,2 @@
+import Link from "next/link";
+export function FilterBar({preset}:{preset:"7d"|"14d"|"30d"}){return <div className="mb-4 flex gap-2 overflow-x-auto pb-1">{(['7d','14d','30d'] as const).map(x=><Link key={x} href={`?preset=${x}`} className={`whitespace-nowrap rounded-md border px-3 py-1.5 text-[11px] ${preset===x?'border-slate-900 bg-slate-900 text-white':'bg-white text-slate-600'}`}>{x.toUpperCase()}</Link>)}</div>}
