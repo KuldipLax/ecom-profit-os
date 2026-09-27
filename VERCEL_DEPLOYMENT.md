@@ -24,6 +24,7 @@ In Supabase SQL Editor, execute:
 
 1. `supabase/migrations/0001_initial.sql`
 2. `supabase/migrations/0002_hardening.sql`
+3. `supabase/migrations/0003_security_hardening.sql`
 
 They create the tables, indexes, roles, RLS policies, Storage bucket and onboarding function.
 
