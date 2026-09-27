@@ -5,8 +5,8 @@ import { ProfitTrend } from "@/components/charts/profit-trend";
 import { GlobalFilters } from "@/components/dashboard/global-filters";
 import { getBusinessContext } from "@/lib/auth/business-context";
 import { getMemberships } from "@/lib/auth/require-user";
-import { calculateBusinessPeriodProfit, calculateDailyTrend } from "@/lib/profit-engine/server";
-import { getProductProfitability, getRtoIntelligence, getForwardOrders } from "@/lib/analytics/server";
+import { calculateBusinessPeriodProfit, calculateDailyTrend, getForwardOrders } from "@/lib/profit-engine/server";
+import { getProductProfitability, getRtoIntelligence } from "@/lib/analytics/server";
 import { analyticsQuery } from "@/lib/utils/query";
 import { formatCurrency, formatPercent, formatNumber } from "@/lib/utils/format";
 import Link from "next/link";
@@ -36,7 +36,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   const topRtoState = rto.byState[0]?.label ?? "—";
   const topRtoPincode = rto.byPincode[0]?.label ?? "—";
   const topRtoCourier = rto.byCourier[0]?.label ?? "—";
-  const forwardRevenue = forward.reduce((s, o: any) => s + Number(o.gross_sale ?? 0), 0);
+  const forwardRevenue = forward.reduce((sum: number, o: any) => sum + Number(o.gross_sale ?? 0), 0);
 
   return (
     <AppShell title="Dashboard" businessName={ctx.business?.name} role={ctx.role}>
