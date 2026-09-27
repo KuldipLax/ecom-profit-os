@@ -107,7 +107,7 @@ export default async function Page({
                   metric="Delivered orders"
                   change={signedPercent(moneyChange(d.deliveredRevenue, p.deliveredRevenue))}
                   positive={d.deliveredRevenue >= p.deliveredRevenue}
-                  note={`${formatNumber(d.deliveredOrders)} delivered orders`}
+                  note={`${formatNumber(d.effectiveDelivered)} delivered orders`}
                 />
               </div>
               <div className="span-3">
@@ -130,7 +130,7 @@ export default async function Page({
                   metric="Delivered"
                   change={signedPercent(moneyChange(d.orders, p.orders))}
                   positive={d.orders >= p.orders}
-                  note={`Delivered ${formatNumber(d.deliveredOrders)} · RTO ${formatNumber(d.rto)} · Open ${formatNumber(d.open)}`}
+                  note={`Delivered ${formatNumber(d.effectiveDelivered)} · RTO ${formatNumber(d.rto)} · Open ${formatNumber(d.open)}`}
                 />
               </div>
             </div>
@@ -270,7 +270,7 @@ export default async function Page({
                     <div className="metric-row"><span>RTO Orders</span><strong>{formatNumber(d.rto)}</strong></div>
                     <div className="metric-row"><span>Open Orders</span><strong>{formatNumber(d.open)}</strong></div>
                     <div className="metric-row"><span>Shipped Orders</span><strong>{formatNumber(d.shipped)}</strong></div>
-                    <div className="metric-row"><span>Delivered Orders</span><strong>{formatNumber(d.deliveredOrders)}</strong></div>
+                    <div className="metric-row"><span>Delivered Orders</span><strong>{formatNumber(d.effectiveDelivered)}</strong></div>
                   </div>
                   <div style={{ marginTop: 10 }}><Link href="/rto" className="table-cta">View RTO →</Link></div>
                 </div>
