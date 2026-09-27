@@ -58,6 +58,10 @@ export async function POST(request: NextRequest) {
       }, { status: result.ok || !result.supported ? 200 : 400 });
     }
 
+    if (result.supported && !result.ok) {
+      return NextResponse.json({ error: result.message, saved: false }, { status: 400 });
+    }
+
     const supabase = createAdminClient();
 
     if (shippingProviders.includes(provider)) {
@@ -87,6 +91,9 @@ export async function POST(request: NextRequest) {
 
     const status = result.ok ? "connected" : "not_configured";
     const metadata = metadataFor(provider, credentials, result.message);
+    if (provider === "meta") {
+      metadata.ad_accounts = (result.details?.adAccounts ?? []) as unknown[];
+    }
 
     const { data: integration, error: integrationError } = await supabase
       .from("integrations")
@@ -124,11 +131,19 @@ export async function POST(request: NextRequest) {
       external_account_id: externalId,
       credentials_encrypted: encryptSecret(JSON.stringify(credentials)),
       scopes: provider === "shopify" ? (credentials.scopes ?? "").split(",").map((x) => x.trim()).filter(Boolean) : [],
-      metadata: {
-        auth_method: "manual",
-        provider,
-        webhook_configured: Boolean(credentials.webhookSecret),
-      },
+      metadata: provider === "meta"
+        ? {
+            auth_method: "manual",
+            provider,
+            webhook_configured: Boolean(credentials.webhookSecret),
+            ad_accounts: (result.details?.adAccounts ?? []) as unknown[],
+            selected_ad_account_ids: (result.details?.adAccounts ?? []).map((item: any) => String(item.id)),
+          }
+        : {
+            auth_method: "manual",
+            provider,
+            webhook_configured: Boolean(credentials.webhookSecret),
+          },
     });
     if (accountError) throw accountError;
 
