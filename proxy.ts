@@ -37,6 +37,7 @@ export async function proxy(request: NextRequest) {
     "/api/auth/signup",
     "/api/auth/forgot-password",
     "/api/auth/update-password",
+    "/api/auth/session",
     "/api/auth/callback",
     "/api/health",
   ].some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -60,17 +61,18 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  const { data } = await supabase.auth.getUser();
-  const isProtected = protectedPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  const { data } = await supabase.auth.getClaims();
+  const isAuthenticated = Boolean(data?.claims?.sub);
+  const isProtected = protectedPaths.some((p) => pathname === p || pathname.startsWith(`proxy.ts/`));
 
-  if (isProtected && !data.user) {
+  if (isProtected && !isAuthenticated) {
     const redirect = NextResponse.redirect(
       new URL(`/login?next=${encodeURIComponent(pathname + request.nextUrl.search)}`, request.url),
     );
     return copySupabaseCookies(response, redirect);
   }
 
-  if ((pathname === "/login" || pathname === "/signup" || pathname === "/admin/login") && data.user) {
+  if ((pathname === "/login" || pathname === "/signup" || pathname === "/admin/login") && isAuthenticated) {
     const redirect = NextResponse.redirect(
       new URL(pathname === "/admin/login" ? "/admin" : "/dashboard", request.url),
     );
