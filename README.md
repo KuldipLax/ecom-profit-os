@@ -9,7 +9,7 @@ Production-oriented multi-tenant SaaS architecture for e-commerce profitability 
 - Next.js 16.3.6 + React + TypeScript + Tailwind CSS + Recharts.
 - Supabase PostgreSQL, Auth, RLS and private Storage.
 - Multi-tenant `businesses` + `memberships` isolation.
-- Email/password signup, verification, login, forgot/reset password and secure SSR sessions.
+- Email/password signup, verification, login, forgot/reset password and secure SSR sessions through server-backed auth routes.
 - Admin and client application areas.
 - Centralized Decimal.js profit calculation engine version `1.0.0`.
 - Effective-delivery rules, RTO handling, date-effective COGS, shipping MAX logic, checkout fees, prepaid PG fees and Meta GST.
