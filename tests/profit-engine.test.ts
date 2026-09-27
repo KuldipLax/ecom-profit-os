@@ -6,7 +6,8 @@ const settings={treatPrepaidAsEffectiveDelivered:true,checkoutFee:{method:"perce
 const base={orderId:"o1",orderNumber:"1001",orderDate:"2026-09-20T10:00:00Z",grossSale:1000,refundedAmount:0,paymentMethod:"prepaid" as const,status:"DELIVERED",lines:[{quantity:1,unitCost:140}],shipping:{applicable:true,totalFreight:100,unbilledCharges:60}};
 
 describe("central profit engine",()=>{
- it("matches critical contribution before marketing",()=>expect(criticalTestContribution()).toBe(720));
+ it("matches critical contribution before marketing (arithmetic)",()=>expect(criticalTestContribution()).toBe(720));
+ it("matches critical contribution before marketing through the real engine",()=>expect(calculateOrderEconomics(base,settings).contributionBeforeMarketing).toBe(720));
  it("uses MAX(freight, unbilled) shipping",()=>expect(calculateOrderEconomics({...base,status:"DELIVERED"},settings).shipping).toBe(100));
  it("does not add unbilled charges on top of freight",()=>expect(calculateOrderEconomics({...base,shipping:{applicable:true,totalFreight:100,unbilledCharges:150}},settings).shipping).toBe(150));
  it("treats prepaid as effective delivered when enabled",()=>expect(calculateOrderEconomics({...base,status:"SHIPPED"},settings).effectiveStatus).toBe("EFFECTIVE_DELIVERED"));
