@@ -1,2 +1,53 @@
-"use client";import { useState } from "react";import { rangeFromPreset } from "@/lib/utils/date";import { useRouter,useSearchParams } from "next/navigation";import { Button } from "@/components/ui/button";import { Input } from "@/components/ui/input";import { Label } from "@/components/ui/label";
-export function GlobalFilters({businessId,memberships}:{businessId:string;memberships:any[]}){const sp=useSearchParams(),router=useRouter();const [business,setBusiness]=useState(sp.get('business')??businessId),[start,setStart]=useState(sp.get('start')??''),[end,setEnd]=useState(sp.get('end')??''),[channel,setChannel]=useState(sp.get('channel')??''),[paymentMethod,setPaymentMethod]=useState(sp.get('paymentMethod')??''),[product,setProduct]=useState(sp.get('product')??''),[sku,setSku]=useState(sp.get('sku')??''),[courier,setCourier]=useState(sp.get('courier')??''),[state,setState]=useState(sp.get('state')??''),[pincode,setPincode]=useState(sp.get('pincode')??''),[orderStatus,setOrderStatus]=useState(sp.get('orderStatus')??'');function apply(e:React.FormEvent){e.preventDefault();const p=new URLSearchParams();p.set('business',business);if(start)p.set('start',start);if(end)p.set('end',end);const vals={channel,paymentMethod,product,sku,courier,state,pincode,orderStatus};Object.entries(vals).forEach(([k,v])=>{if(v)p.set(k,v)});router.push(`?${p.toString()}`);}return <form onSubmit={apply} className="mb-4 rounded-lg border bg-white p-3"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6"><div><Label>Business</Label><select className="h-9 w-full rounded-md border px-3 text-sm" value={business} onChange={e=>setBusiness(e.target.value)}>{memberships.map((m:any)=><option key={m.business_id} value={m.business_id}>{m.businesses?.name??m.business_id}</option>)}</select></div><div><Label>From</Label><Input type="date" value={start} onChange={e=>setStart(e.target.value)}/></div><div><Label>To</Label><Input type="date" value={end} onChange={e=>setEnd(e.target.value)}/></div><div><Label>Channel</Label><select className="h-9 w-full rounded-md border px-3 text-sm" value={channel} onChange={e=>setChannel(e.target.value)}><option value="">All</option><option value="shopify">Shopify</option><option value="manual">Manual</option><option value="csv">CSV</option></select></div><div><Label>Payment</Label><select className="h-9 w-full rounded-md border px-3 text-sm" value={paymentMethod} onChange={e=>setPaymentMethod(e.target.value)}><option value="">All</option><option value="prepaid">Prepaid</option><option value="cod">COD</option><option value="unknown">Unknown</option></select></div><div><Label>Status</Label><select className="h-9 w-full rounded-md border px-3 text-sm" value={orderStatus} onChange={e=>setOrderStatus(e.target.value)}><option value="">All</option>{['PLACED','PROCESSING','SHIPPED','IN_TRANSIT','REACHED_DESTINATION','DELIVERED','RTO_PROCESSING','RTO_IN_TRANSIT','RTO_DELIVERED','UNDELIVERED','CANCELLED','OPEN'].map(x=><option key={x}>{x}</option>)}</select></div></div><details className="mt-3"><summary className="cursor-pointer text-[11px] font-medium text-slate-500">Advanced filters</summary><div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5"><div><Label>Product</Label><Input value={product} onChange={e=>setProduct(e.target.value)} placeholder="Name or UUID"/></div><div><Label>SKU</Label><Input value={sku} onChange={e=>setSku(e.target.value)}/></div><div><Label>Courier</Label><Input value={courier} onChange={e=>setCourier(e.target.value)}/></div><div><Label>State</Label><Input value={state} onChange={e=>setState(e.target.value)}/></div><div><Label>Pincode</Label><Input value={pincode} onChange={e=>setPincode(e.target.value)}/></div></div></details><div className="mt-3 flex flex-wrap items-center justify-between gap-2"><div className="flex gap-1"><button type="button" className="rounded border px-2 py-1 text-[10px]" onClick={()=>{const e=new Date(),s=new Date(e);s.setDate(e.getDate()-6);setStart(s.toISOString().slice(0,10));setEnd(e.toISOString().slice(0,10))}}>7D</button><button type="button" className="rounded border px-2 py-1 text-[10px]" onClick={()=>{const e=new Date(),s=new Date(e);s.setDate(e.getDate()-13);setStart(s.toISOString().slice(0,10));setEnd(e.toISOString().slice(0,10))}}>14D</button><button type="button" className="rounded border px-2 py-1 text-[10px]" onClick={()=>{const e=new Date(),s=new Date(e);s.setDate(e.getDate()-29);setStart(s.toISOString().slice(0,10));setEnd(e.toISOString().slice(0,10))}}>30D</button><button type="button" className="rounded border px-2 py-1 text-[10px]" onClick={()=>{const r=rangeFromPreset("month");setStart(r.start);setEnd(r.end)}}>MTD</button></div><div className="flex items-center gap-2"><div className="text-[10px] text-slate-400">Custom dates override presets. Filters are applied on the server.</div><Button size="sm">Apply filters</Button></div></div></form>}
+"use client";
+import { useState } from "react";
+import { rangeFromPreset } from "@/lib/utils/date";
+import { useRouter,useSearchParams } from "next/navigation";
+
+export function GlobalFilters({businessId,memberships}:{businessId:string;memberships:any[]}){
+  const sp=useSearchParams(),router=useRouter();
+  const [business,setBusiness]=useState(sp.get("business")??businessId);
+  const [start,setStart]=useState(sp.get("start")??"");
+  const [end,setEnd]=useState(sp.get("end")??"");
+  const [channel,setChannel]=useState(sp.get("channel")??"");
+  const [paymentMethod,setPaymentMethod]=useState(sp.get("paymentMethod")??"");
+  const [orderStatus,setOrderStatus]=useState(sp.get("orderStatus")??"");
+  const [product,setProduct]=useState(sp.get("product")??"");
+
+  function apply(e:React.FormEvent){
+    e.preventDefault();
+    const p=new URLSearchParams();
+    p.set("business",business);
+    if(start)p.set("start",start);
+    if(end)p.set("end",end);
+    if(channel)p.set("channel",channel);
+    if(paymentMethod)p.set("paymentMethod",paymentMethod);
+    if(orderStatus)p.set("orderStatus",orderStatus);
+    if(product)p.set("product",product);
+    router.push("?"+p.toString());
+  }
+  function preset(name:"7d"|"14d"|"30d"|"month"){
+    const r=rangeFromPreset(name as any);
+    setStart(r.start);setEnd(r.end);
+  }
+
+  return <form onSubmit={apply} className="filters">
+    {memberships.length>1&&<label className="filter" style={{paddingRight:6}}>
+      <span className="muted">Business</span>
+      <select value={business} onChange={e=>setBusiness(e.target.value)} style={{border:0,background:"transparent",outline:0,fontSize:11,fontWeight:600,color:"var(--text)"}}>
+        {memberships.map((m:any)=><option key={m.business_id} value={m.business_id}>{m.businesses?.name??m.business_id}</option>)}
+      </select>
+    </label>}
+    <label className="filter"><span className="muted">From</span><input type="date" value={start} onChange={e=>setStart(e.target.value)} style={{border:0,background:"transparent",outline:0,fontSize:11,color:"var(--text)"}}/></label>
+    <label className="filter"><span className="muted">To</span><input type="date" value={end} onChange={e=>setEnd(e.target.value)} style={{border:0,background:"transparent",outline:0,fontSize:11,color:"var(--text)"}}/></label>
+    <label className="filter"><span className="muted">Channel</span><select value={channel} onChange={e=>setChannel(e.target.value)} style={{border:0,background:"transparent",outline:0,fontSize:11,fontWeight:600,color:"var(--text)"}}><option value="">All</option><option value="shopify">Shopify</option><option value="manual">Manual</option><option value="csv">CSV</option></select></label>
+    <label className="filter"><span className="muted">Payment</span><select value={paymentMethod} onChange={e=>setPaymentMethod(e.target.value)} style={{border:0,background:"transparent",outline:0,fontSize:11,fontWeight:600,color:"var(--text)"}}><option value="">All</option><option value="prepaid">Prepaid</option><option value="cod">COD</option><option value="unknown">Unknown</option></select></label>
+    <label className="filter"><span className="muted">Status</span><select value={orderStatus} onChange={e=>setOrderStatus(e.target.value)} style={{border:0,background:"transparent",outline:0,fontSize:11,fontWeight:600,color:"var(--text)"}}><option value="">All</option><option value="DELIVERED">Delivered</option><option value="RTO_DELIVERED">RTO</option><option value="OPEN">Open</option><option value="SHIPPED">Shipped</option></select></label>
+    <label className="filter"><span className="muted">Product</span><input value={product} onChange={e=>setProduct(e.target.value)} placeholder="All products" style={{width:96,border:0,background:"transparent",outline:0,fontSize:11,color:"var(--text)"}}/></label>
+    <div style={{display:"flex",gap:5,marginLeft:"auto"}}>
+      <button type="button" className="filter" onClick={()=>preset("7d")}>7D</button>
+      <button type="button" className="filter" onClick={()=>preset("14d")}>14D</button>
+      <button type="button" className="filter" onClick={()=>preset("30d")}>30D</button>
+      <button type="button" className="primary-btn" onClick={apply}>Apply</button>
+    </div>
+  </form>
+}
