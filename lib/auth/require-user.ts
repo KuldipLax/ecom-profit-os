@@ -83,3 +83,18 @@ export async function requireAdmin() {
   if (!(data ?? []).some((m) => m.role === "super_admin" || m.role === "admin")) redirect("/dashboard");
   return { user, memberships: data ?? [] };
 }
+
+export async function requireSuperAdmin() {
+  const user = await requireUser();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("memberships")
+    .select("business_id,role,status")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .eq("role", "super_admin");
+
+  if (error) throw new Error(error.message);
+  if (!(data ?? []).length) redirect("/dashboard");
+  return { user, memberships: data ?? [] };
+}
