@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
             provider,
             webhook_configured: Boolean(credentials.webhookSecret),
             ad_accounts: (result.details?.adAccounts ?? []) as unknown[],
-            selected_ad_account_ids: (result.details?.adAccounts ?? []).map((item: any) => String(item.id)),
+            selected_ad_account_ids: (result.details?.selectedIds ?? (result.details?.adAccounts ?? []).map((item: any) => String(item.id))) as unknown[],
           }
         : {
             auth_method: "manual",
