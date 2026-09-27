@@ -324,10 +324,10 @@ export function IntegrationsPanel({ businessId, integrations, appUrl, oauthAvail
                       <div className="integration-field"><label>Store domain</label><Input value={shop} onChange={(e) => setShop(e.target.value.trim())} placeholder="your-store.myshopify.com" /></div>
                       <div className="integration-field"><label>Admin API access token</label><Input type="password" value={shopifyToken} onChange={(e) => setShopifyToken(e.target.value)} placeholder="Paste the Admin API token" /></div>
                     </div>
-                    <div className="integration-field"><label>Webhook secret <span className="field-optional">(needed to use the webhook URL)</span></label><div className="integration-secret-row"><Input type="password" value={shopifyWebhookSecret} onChange={(e) => setShopifyWebhookSecret(e.target.value)} placeholder="Paste or generate a webhook secret" /><Button type="button" variant="secondary" size="sm" onClick={() => setShopifyWebhookSecret(generateSecret())}>Generate</Button></div></div>
+                    <div className="integration-field"><label>Shopify app client secret <span className="field-optional">(optional; required for webhook verification when platform secret is not configured)</span></label><Input type="password" value={shopifyWebhookSecret} onChange={(e) => setShopifyWebhookSecret(e.target.value)} placeholder="Paste the Shopify app client secret" /></div>
                     <div className="integration-help-list">
-                      <span>Shopify Admin → Apps and sales channels / Develop apps → configure Admin API scopes → install or generate the token → paste it here.</span>
-                      <span>Required data scopes are controlled by your app setup; this product needs order, product and fulfillment read access.</span>
+                      <span>Shopify Admin → Apps and sales channels / Develop apps → configure Admin API scopes → install the app or create the token → paste the Admin API token here.</span>
+                      <span>If Shopify webhooks are enabled for this manual connection, use the same app's client secret for HMAC verification; do not generate a separate random webhook secret.</span>
                     </div>
                     <div className="integration-webhook">
                       <div><Webhook size={13} /><strong>Webhook</strong><span>POST endpoint for order/refund/fulfillment events</span></div>
@@ -338,7 +338,7 @@ export function IntegrationsPanel({ businessId, integrations, appUrl, oauthAvail
                       <Button variant="secondary" size="sm" onClick={() => testManual("shopify", { shop, adminApiToken: shopifyToken, webhookSecret: shopifyWebhookSecret })} disabled={!!busy || !shop || !shopifyToken}>
                         <ShieldCheck size={12} /> {busy === "test:shopify" ? "Testing…" : "Test Connection"}
                       </Button>
-                      <Button size="sm" className={saved.shopify ? "integration-save-button-saved" : ""} onClick={() => saveManual("shopify", "shopify", { shop, adminApiToken: shopifyToken, webhookSecret: shopifyWebhookSecret })} disabled={!!busy || !shop || !shopifyToken || !shopifyWebhookSecret || shopifySaved}>
+                      <Button size="sm" className={saved.shopify ? "integration-save-button-saved" : ""} onClick={() => saveManual("shopify", "shopify", { shop, adminApiToken: shopifyToken, webhookSecret: shopifyWebhookSecret })} disabled={!!busy || !shop || !shopifyToken || shopifySaved}>
                         <Check size={12} /> {saved.shopify || shopifySaved ? "Saved" : busy === "save:shopify" ? "Saving…" : "Save & Connect"}
                       </Button>
                     </div>
@@ -458,7 +458,7 @@ export function IntegrationsPanel({ businessId, integrations, appUrl, oauthAvail
                   {origin && <button type="button" className="icon-copy" onClick={() => navigator.clipboard?.writeText(getWebhookUrl(shippingProvider, businessId, origin))} aria-label="Copy shipping webhook URL"><Copy size={13} /></button>}
                 </div>
                 <div className="integration-help-list">
-                  <span>Shiprocket: Settings → API → create API user, copy the API credentials, then configure Settings → API → Webhooks with the URL above.</span>
+                  <span>Shiprocket: Settings → API → create API user, copy the API credentials, then configure the provider webhook with the URL above. The webhook secret is optional for saving but required before the endpoint will accept webhook calls.</span>
                   <span>Delhivery: Settings → API Setup exposes the API token; its Developer Portal provides the shipment/tracking API details for your account.</span>
                   <span>For other couriers, the fields are intentionally generic until their account-specific API contract is implemented; saving never falsely marks them as live-synced.</span>
                 </div>
