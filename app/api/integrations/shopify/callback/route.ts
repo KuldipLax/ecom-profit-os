@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/require-user";
 import { verifyShopifyState } from "@/lib/integrations/shopify/oauth";
-import { shopifyGraphQL, verifyShop } from "@/lib/integrations/shopify/client";
+import { verifyShop, registerShopifyWebhooks } from "@/lib/integrations/shopify/client";
 import { env } from "@/lib/env";
 import { encryptSecret } from "@/lib/security/encryption";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -82,28 +82,7 @@ export async function GET(request: NextRequest) {
 
     if (accountError) throw accountError;
 
-    const webhookResults = await (async () => {
-      const topics = [
-        "ORDERS_CREATE",
-        "ORDERS_UPDATED",
-        "ORDERS_CANCELLED",
-        "REFUNDS_CREATE",
-        "FULFILLMENTS_UPDATE",
-      ];
-      const mutation = `mutation Subscribe($topic:WebhookSubscriptionTopic!,$uri:URL!){webhookSubscriptionCreate(topic:$topic,webhookSubscription:{uri:$uri}){userErrors{field message}}}`;
-      const results: unknown[] = [];
-      for (const topic of topics) {
-        try {
-          results.push(await shopifyGraphQL(shop, token, mutation, {
-            topic,
-            uri: `${request.nextUrl.origin}/api/webhooks/shopify`,
-          }, { retries: 0, timeoutMs: 8000 }));
-        } catch (error) {
-          results.push({ topic, error: error instanceof Error ? error.message : String(error) });
-        }
-      }
-      return results;
-    })();
+    const webhookResults = await registerShopifyWebhooks(shop, token, request.nextUrl.origin);
 
     await supabase.from("audit_logs").insert({
       business_id: businessId,
