@@ -3,7 +3,6 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { KPI } from "@/components/dashboard/kpi";
 import { ProfitTrend } from "@/components/charts/profit-trend";
 import { GlobalFilters } from "@/components/dashboard/global-filters";
-import { DataHealth } from "@/components/dashboard/data-health";
 import { getBusinessContext } from "@/lib/auth/business-context";
 import { getMemberships } from "@/lib/auth/require-user";
 import { calculateBusinessPeriodProfit, getDataHealth } from "@/lib/profit-engine/server";
@@ -21,10 +20,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   const memberships = await getMemberships();
   const { range, filters } = analyticsQuery(q);
 
-  const [period, trend, health, products, rto, forward, prior] = await Promise.all([
+  const [period, trend, products, rto, forward, prior] = await Promise.all([
     calculateBusinessPeriodProfit(ctx.businessId, range.start, range.end, undefined, filters),
     calculateDailyTrend(ctx.businessId, range.start, range.end, undefined, filters),
-    getDataHealth(ctx.businessId),
     getProductProfitability(ctx.businessId, range.start, range.end, filters),
     getRtoIntelligence(ctx.businessId, range.start, range.end, filters),
     getForwardOrders(ctx.businessId, range.start, range.end, filters),
