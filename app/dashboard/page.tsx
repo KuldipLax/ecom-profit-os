@@ -21,16 +21,20 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   const memberships = await getMemberships();
   const { range, filters } = analyticsQuery(q);
 
-  const [period, trend, health, products, rto, forward] = await Promise.all([
+  const [period, trend, health, products, rto, forward, prior] = await Promise.all([
     calculateBusinessPeriodProfit(ctx.businessId, range.start, range.end, undefined, filters),
     calculateDailyTrend(ctx.businessId, range.start, range.end, undefined, filters),
     getDataHealth(ctx.businessId),
     getProductProfitability(ctx.businessId, range.start, range.end, filters),
     getRtoIntelligence(ctx.businessId, range.start, range.end, filters),
     getForwardOrders(ctx.businessId, range.start, range.end, filters),
+    calculateBusinessPeriodProfit(ctx.businessId, (() => { const x = new Date(range.start + "T00:00:00Z"); const days = Math.max(1, Math.round((new Date(range.end + "T00:00:00Z").getTime() - x.getTime()) / 86400000) + 1); x.setUTCDate(x.getUTCDate() - days); return x.toISOString().slice(0, 10); })(), new Date(new Date(range.start + "T00:00:00Z").getTime() - 86400000).toISOString().slice(0, 10), undefined, filters),
   ]);
 
   const d = period.result;
+  const p = prior.result;
+  const changePct = (a: number, b: number) => b === 0 ? 0 : Math.abs(((a - b) / Math.abs(b)) * 100);
+  const isUpGood = (a: number, b: number, invert = false) => invert ? a <= b : a >= b;
   const topProducts = products.slice(0, 5);
   const topRtoState = rto.byState[0]?.label ?? "—";
   const topRtoPincode = rto.byPincode[0]?.label ?? "—";
@@ -45,20 +49,20 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
       <section className="section">
         <div className="section-head"><div className="section-title">Primary business KPIs</div><div className="section-note">Level 1 · decision signals</div></div>
         <div className="grid-12">
-          <div className="span-3"><KPI label="NET PROFIT" value={d.netProfit} level1 metric="Profit margin" /></div>
-          <div className="span-3"><KPI label="DELIVERED REVENUE" value={d.deliveredRevenue} level1 metric="Delivered orders" note={formatNumber(d.effectiveDelivered) + " delivered orders"} /></div>
-          <div className="span-3"><KPI label="GROSS SALE" value={d.grossSale} level1 metric="Total orders" note={formatNumber(d.orders) + " total orders"} /></div>
-          <div className="span-3"><KPI label="ORDERS" value={d.orders} kind="number" level1 metric="Delivered" note={"Delivered " + formatNumber(d.effectiveDelivered) + " · RTO " + formatNumber(d.rto) + " · Open " + formatNumber(d.open)} /></div>
+          <div className="span-3"><KPI label="NET PROFIT" value={d.netProfit} level1 metric="Profit margin" change={changePct(d.netProfit,p.netProfit).toFixed(1) + "%"} positive={isUpGood(d.netProfit,p.netProfit)} /></div>
+          <div className="span-3"><KPI label="DELIVERED REVENUE" value={d.deliveredRevenue} level1 metric="Delivered orders" change={changePct(d.deliveredRevenue,p.deliveredRevenue).toFixed(1) + "%"} positive={isUpGood(d.deliveredRevenue,p.deliveredRevenue)} note={formatNumber(d.effectiveDelivered) + " delivered orders"} /></div>
+          <div className="span-3"><KPI label="GROSS SALE" value={d.grossSale} level1 metric="Total orders" change={changePct(d.grossSale,p.grossSale).toFixed(1) + "%"} positive={isUpGood(d.grossSale,p.grossSale)} note={formatNumber(d.orders) + " total orders"} /></div>
+          <div className="span-3"><KPI label="ORDERS" value={d.orders} kind="number" level1 metric="Delivered" change={changePct(d.orders,p.orders).toFixed(1) + "%"} positive={isUpGood(d.orders,p.orders)} note={"Delivered " + formatNumber(d.effectiveDelivered) + " · RTO " + formatNumber(d.rto) + " · Open " + formatNumber(d.open)} /></div>
         </div>
       </section>
 
       <section className="section">
         <div className="section-head"><div className="section-title">Business health</div><div className="section-note">Level 2 · operational signals</div></div>
         <div className="grid-12">
-          <div className="span-3"><KPI label="DELIVERY RATE" value={d.deliveryRate} kind="percent" secondary metric="vs previous period" note="Delivered ÷ fulfilled orders" /></div>
-          <div className="span-3"><KPI label="RTO RATE" value={d.rtoRate} kind="percent" secondary metric="vs previous period" note="RTO ÷ fulfilled orders" /></div>
-          <div className="span-3"><KPI label="EFFECTIVE MARKETING COST" value={d.effectiveMarketingCost} secondary metric="vs previous period" note="Meta spend + GST" /></div>
-          <div className="span-3"><KPI label="ROAS" value={d.roas} kind="x" secondary metric="vs previous period" note="Delivered revenue ÷ marketing cost" /></div>
+          <div className="span-3"><KPI label="DELIVERY RATE" value={d.deliveryRate} kind="percent" secondary metric="vs previous period" change={changePct(d.deliveryRate,p.deliveryRate).toFixed(1) + "%"} positive={isUpGood(d.deliveryRate,p.deliveryRate)} note="Delivered ÷ fulfilled orders" /></div>
+          <div className="span-3"><KPI label="RTO RATE" value={d.rtoRate} kind="percent" secondary metric="vs previous period" change={changePct(d.rtoRate,p.rtoRate).toFixed(1) + "%"} positive={isUpGood(d.rtoRate,p.rtoRate,true)} note="RTO ÷ fulfilled orders" /></div>
+          <div className="span-3"><KPI label="EFFECTIVE MARKETING COST" value={d.effectiveMarketingCost} secondary metric="vs previous period" change={changePct(d.effectiveMarketingCost,p.effectiveMarketingCost).toFixed(1) + "%"} positive={isUpGood(d.effectiveMarketingCost,p.effectiveMarketingCost,true)} note="Meta spend + GST" /></div>
+          <div className="span-3"><KPI label="ROAS" value={d.roas} kind="x" secondary metric="vs previous period" change={changePct(d.roas,p.roas).toFixed(1) + "%"} positive={isUpGood(d.roas,p.roas)} note="Delivered revenue ÷ marketing cost" /></div>
         </div>
       </section>
 
@@ -154,8 +158,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
           <div className="diag-item"><div className="diag-label">Diagnostic 03</div><div className="diag-copy">{formatCurrency(d.effectiveMarketingCost)} effective marketing cost including configured Meta GST.</div></div>
         </div></div>
       </section>
-
-      <div className="section"><DataHealth data={health} /></div>
     </AppShell>
   );
 }
