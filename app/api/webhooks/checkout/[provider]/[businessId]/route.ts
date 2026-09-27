@@ -37,10 +37,11 @@ export async function POST(
   const secret = String(credentials.webhookSecret ?? "");
   const provided = request.headers.get("x-api-key") ?? request.headers.get("x-webhook-secret") ?? request.headers.get("x-razorpay-signature") ?? "";
 
-  if (provider === "razorpay" && secret) {
+  if (!secret) return NextResponse.json({ error: "Webhook secret is not configured for this integration." }, { status: 409 });
+  if (provider === "razorpay") {
     const expected = crypto.createHmac("sha256", secret).update(raw).digest("hex");
     if (!timingSafeEqualString(provided, expected)) return NextResponse.json({ error: "Invalid checkout webhook signature." }, { status: 401 });
-  } else if (secret && !timingSafeEqualString(provided, secret)) {
+  } else if (!timingSafeEqualString(provided, secret)) {
     return NextResponse.json({ error: "Invalid checkout webhook secret." }, { status: 401 });
   }
 
