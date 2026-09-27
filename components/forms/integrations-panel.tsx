@@ -466,7 +466,7 @@ export function IntegrationsPanel({ businessId, integrations, appUrl, oauthAvail
                   <Button variant="secondary" size="sm" onClick={() => testManual(shippingProvider, { ...shippingCredentials, webhookSecret: shippingWebhookSecret })} disabled={!!busy || !shippingCredentials.email && !shippingCredentials.apiToken && !shippingCredentials.apiKey && !shippingCredentials.username}>
                     <ShieldCheck size={12} /> {busy === `test:${shippingProvider}` ? "Testing…" : "Test Connection"}
                   </Button>
-                  <Button size="sm" className={saved.shipping ? "integration-save-button-saved" : ""} onClick={() => saveManual("shipping", shippingProvider, { ...shippingCredentials, webhookSecret: shippingWebhookSecret })} disabled={!!busy || shippingSaved || !shippingWebhookSecret || (!shippingCredentials.email && !shippingCredentials.apiToken && !shippingCredentials.apiKey && !shippingCredentials.username)}>
+                  <Button size="sm" className={saved.shipping ? "integration-save-button-saved" : ""} onClick={() => saveManual("shipping", shippingProvider, { ...shippingCredentials, webhookSecret: shippingWebhookSecret })} disabled={!!busy || shippingSaved || (!shippingCredentials.email && !shippingCredentials.apiToken && !shippingCredentials.apiKey && !shippingCredentials.username)}>
                     <Check size={12} /> {saved.shipping || shippingSaved ? "Saved" : busy === `save:${shippingProvider}` ? "Saving…" : "Save & Connect"}
                   </Button>
                 </div>
@@ -526,7 +526,7 @@ export function IntegrationsPanel({ businessId, integrations, appUrl, oauthAvail
                   <Button variant="secondary" size="sm" onClick={() => testManual(checkoutProvider, { ...checkoutCredentials, webhookSecret: checkoutWebhookSecret })} disabled={!!busy || !Object.values(checkoutCredentials).some(Boolean)}>
                     <ShieldCheck size={12} /> {busy === `test:${checkoutProvider}` ? "Testing…" : "Test Connection"}
                   </Button>
-                  <Button size="sm" className={saved.checkout ? "integration-save-button-saved" : ""} onClick={() => saveManual("checkout", checkoutProvider, { ...checkoutCredentials, webhookSecret: checkoutWebhookSecret })} disabled={!!busy || checkoutSaved || !checkoutWebhookSecret || !Object.values(checkoutCredentials).some(Boolean)}>
+                  <Button size="sm" className={saved.checkout ? "integration-save-button-saved" : ""} onClick={() => saveManual("checkout", checkoutProvider, { ...checkoutCredentials, webhookSecret: checkoutWebhookSecret })} disabled={!!busy || checkoutSaved || !Object.values(checkoutCredentials).some(Boolean)}>
                     <Check size={12} /> {saved.checkout || checkoutSaved ? "Saved" : busy === `save:${checkoutProvider}` ? "Saving…" : "Save & Connect"}
                   </Button>
                 </div>
