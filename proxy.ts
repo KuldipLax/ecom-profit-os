@@ -16,7 +16,8 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const pathname = request.nextUrl.pathname;
   const isWebhookOrCron = pathname.startsWith("/api/webhooks/") || pathname.startsWith("/api/cron/");
-  if (isWebhookOrCron) return response;
+  const isPublicApi = ["/api/auth/login", "/api/auth/callback", "/api/health"].some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  if (isWebhookOrCron || isPublicApi) return response;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY;
