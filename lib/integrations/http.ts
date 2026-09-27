@@ -7,31 +7,38 @@ export async function fetchWithRetry(
   const timeoutMs = opts.timeoutMs ?? 20000;
   let last: unknown;
 
-  for (let i = 0; i <= retries; i++) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
-    const abortParent = () => controller.abort();
-    init.signal?.addEventListener("abort", abortParent, { once: true });
 
     try {
-      const r = await fetch(input, { ...init, signal: controller.signal });
-      if ((r.status === 429 || r.status >= 500) && i < retries) {
+      const response = await fetch(
+        input,
+        init.signal ? init : { ...init, signal: controller.signal },
+      );
+
+      if ((response.status === 429 || response.status >= 500) && attempt < retries) {
         const wait =
-          Number(r.headers.get("retry-after") ?? 0) * 1000 ||
-          Math.min(1000 * 2 ** i, 8000);
+          Number(response.headers.get("retry-after") ?? 0) * 1000 ||
+          Math.min(1000 * 2 ** attempt, 8000);
+        clearTimeout(timer);
         await new Promise((resolve) => setTimeout(resolve, wait));
         continue;
       }
-      return r;
+
+      clearTimeout(timer);
+      return response;
     } catch (error) {
-      last = error;
-      if (i < retries) {
-        await new Promise((resolve) => setTimeout(resolve, Math.min(1000 * 2 ** i, 8000)));
+      last =
+        error instanceof Error && error.name === "AbortError"
+          ? new Error("Upstream request timed out.")
+          : error;
+
+      clearTimeout(timer);
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, Math.min(1000 * 2 ** attempt, 8000)));
         continue;
       }
-    } finally {
-      clearTimeout(timer);
-      init.signal?.removeEventListener("abort", abortParent);
     }
   }
 
