@@ -324,8 +324,8 @@ export function IntegrationsPanel({ businessId, integrations, oauthAvailable = {
                       <Button variant="secondary" size="sm" onClick={() => testManual("shopify", { shop, adminApiToken: shopifyToken, webhookSecret: shopifyWebhookSecret })} disabled={!!busy || !shop || !shopifyToken}>
                         <ShieldCheck size={12} /> {busy === "test:shopify" ? "Testing…" : "Test Connection"}
                       </Button>
-                      <Button size="sm" onClick={() => saveManual("shopify", "shopify", { shop, adminApiToken: shopifyToken, webhookSecret: shopifyWebhookSecret })} disabled={!!busy || !shop || !shopifyToken}>
-                        <Check size={12} /> {busy === "save:shopify" ? "Saving…" : "Save & Connect"}
+                      <Button size="sm" className={saved.shopify ? "integration-save-button-saved" : ""} onClick={() => saveManual("shopify", "shopify", { shop, adminApiToken: shopifyToken, webhookSecret: shopifyWebhookSecret })} disabled={!!busy || !shop || !shopifyToken || shopifySaved}>
+                        <Check size={12} /> {saved.shopify || shopifySaved ? "Saved" : busy === "save:shopify" ? "Saving…" : "Save & Connect"}
                       </Button>
                     </div>
                   </div>
@@ -365,7 +365,7 @@ export function IntegrationsPanel({ businessId, integrations, oauthAvailable = {
                     <div className="integration-guide-title"><ShieldCheck size={14} /> OAuth is the normal path for a Meta app used across client ad accounts.</div>
                     {!oauthAvailable.meta && <div className="integration-warning">Automatic Meta Connect is not enabled on this deployment yet. Platform Meta App ID/Secret/API version must be configured by the platform admin.</div>}
                     <div className="integration-actions">
-                      <a className={`primary-btn ${!oauthAvailable.meta ? "integration-disabled" : ""}`} href={oauthAvailable.meta ? `/api/integrations/meta/start?businessId=${businessId}` : "#"} aria-disabled={!oauthAvailable.meta} onClick={(e) => { if (!oauthAvailable.meta) e.preventDefault(); }}>Connect Meta <ExternalLink size={12} /></a>
+                      <a className={`primary-btn ${metaSaved ? "integration-save-button-saved" : ""} ${!oauthAvailable.meta || metaSaved ? "integration-disabled" : ""}`} href={oauthAvailable.meta && !metaSaved ? `/api/integrations/meta/start?businessId=${businessId}` : "#"} aria-disabled={!oauthAvailable.meta || metaSaved} onClick={(e) => { if (!oauthAvailable.meta || metaSaved) e.preventDefault(); }}>{metaSaved ? <><Check size={12} /> Saved</> : <>Connect Meta <ExternalLink size={12} /></>}</a>
                       <Button variant="ghost" size="sm" onClick={() => setMetaMode("manual")}>Use manual instead</Button>
                     </div>
                     {metaAccounts.length > 0 && (
@@ -394,8 +394,8 @@ export function IntegrationsPanel({ businessId, integrations, oauthAvailable = {
                       <Button variant="secondary" size="sm" onClick={() => testManual("meta", { accessToken: metaToken, adAccountIds: metaAccountIds })} disabled={!!busy || !metaToken}>
                         <ShieldCheck size={12} /> {busy === "test:meta" ? "Testing…" : "Test Connection"}
                       </Button>
-                      <Button size="sm" onClick={() => saveManual("meta", "meta", { accessToken: metaToken, adAccountIds: metaAccountIds })} disabled={!!busy || !metaToken}>
-                        <Check size={12} /> {busy === "save:meta" ? "Saving…" : "Save & Connect"}
+                      <Button size="sm" className={saved.meta ? "integration-save-button-saved" : ""} onClick={() => saveManual("meta", "meta", { accessToken: metaToken, adAccountIds: metaAccountIds })} disabled={!!busy || !metaToken || metaSaved}>
+                        <Check size={12} /> {saved.meta || metaSaved ? "Saved" : busy === "save:meta" ? "Saving…" : "Save & Connect"}
                       </Button>
                     </div>
                   </div>
@@ -452,8 +452,8 @@ export function IntegrationsPanel({ businessId, integrations, oauthAvailable = {
                   <Button variant="secondary" size="sm" onClick={() => testManual(shippingProvider, { ...shippingCredentials, webhookSecret: shippingWebhookSecret })} disabled={!!busy || !shippingCredentials.email && !shippingCredentials.apiToken && !shippingCredentials.apiKey && !shippingCredentials.username}>
                     <ShieldCheck size={12} /> {busy === `test:${shippingProvider}` ? "Testing…" : "Test Connection"}
                   </Button>
-                  <Button size="sm" onClick={() => saveManual("shipping", shippingProvider, { ...shippingCredentials, webhookSecret: shippingWebhookSecret })} disabled={!!busy || (!shippingCredentials.email && !shippingCredentials.apiToken && !shippingCredentials.apiKey && !shippingCredentials.username)}>
-                    <Check size={12} /> {busy === `save:${shippingProvider}` ? "Saving…" : "Save & Connect"}
+                  <Button size="sm" className={saved.shipping ? "integration-save-button-saved" : ""} onClick={() => saveManual("shipping", shippingProvider, { ...shippingCredentials, webhookSecret: shippingWebhookSecret })} disabled={!!busy || shippingSaved || (!shippingCredentials.email && !shippingCredentials.apiToken && !shippingCredentials.apiKey && !shippingCredentials.username)}>
+                    <Check size={12} /> {saved.shipping || shippingSaved ? "Saved" : busy === `save:${shippingProvider}` ? "Saving…" : "Save & Connect"}
                   </Button>
                 </div>
                 <div className="integration-footer">
@@ -512,8 +512,8 @@ export function IntegrationsPanel({ businessId, integrations, oauthAvailable = {
                   <Button variant="secondary" size="sm" onClick={() => testManual(checkoutProvider, { ...checkoutCredentials, webhookSecret: checkoutWebhookSecret })} disabled={!!busy || !Object.values(checkoutCredentials).some(Boolean)}>
                     <ShieldCheck size={12} /> {busy === `test:${checkoutProvider}` ? "Testing…" : "Test Connection"}
                   </Button>
-                  <Button size="sm" onClick={() => saveManual("checkout", checkoutProvider, { ...checkoutCredentials, webhookSecret: checkoutWebhookSecret })} disabled={!!busy || !Object.values(checkoutCredentials).some(Boolean)}>
-                    <Check size={12} /> {busy === `save:${checkoutProvider}` ? "Saving…" : "Save & Connect"}
+                  <Button size="sm" className={saved.checkout ? "integration-save-button-saved" : ""} onClick={() => saveManual("checkout", checkoutProvider, { ...checkoutCredentials, webhookSecret: checkoutWebhookSecret })} disabled={!!busy || checkoutSaved || !Object.values(checkoutCredentials).some(Boolean)}>
+                    <Check size={12} /> {saved.checkout || checkoutSaved ? "Saved" : busy === `save:${checkoutProvider` ? "Saving…" : "Save & Connect"}
                   </Button>
                 </div>
                 <div className="integration-footer">
