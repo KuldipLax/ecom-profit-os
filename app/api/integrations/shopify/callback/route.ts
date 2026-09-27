@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
           results.push(await shopifyGraphQL(shop, token, mutation, {
             topic,
             uri: `${request.nextUrl.origin}/api/webhooks/shopify`,
-          }));
+          }, { retries: 0, timeoutMs: 8000 }));
         } catch (error) {
           results.push({ topic, error: error instanceof Error ? error.message : String(error) });
         }
