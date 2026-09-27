@@ -15,10 +15,10 @@ export async function AppShell({
   return (
     <div className="app">
       <Sidebar role={role} />
-      <div className="main">
+      <main className="main">
         <Topbar businessName={businessName} />
-        <main className="page">{children}</main>
-      </div>
+        <div className="page">{children}</div>
+      </main>
     </div>
   );
 }
