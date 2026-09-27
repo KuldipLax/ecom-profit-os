@@ -1,7 +1,22 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-const protectedPaths = ["/dashboard", "/profit", "/orders", "/products", "/marketing", "/shipping", "/rto", "/cohorts", "/forecast", "/reports", "/settings", "/onboarding", "/admin", "/api"];
+const protectedPaths = [
+  "/dashboard",
+  "/profit",
+  "/orders",
+  "/products",
+  "/marketing",
+  "/shipping",
+  "/rto",
+  "/cohorts",
+  "/forecast",
+  "/reports",
+  "/settings",
+  "/onboarding",
+  "/admin",
+  "/api",
+];
 
 function copySupabaseCookies(from: NextResponse, to: NextResponse) {
   from.cookies.getAll().forEach((cookie) => to.cookies.set(cookie));
@@ -15,8 +30,17 @@ function copySupabaseCookies(from: NextResponse, to: NextResponse) {
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const pathname = request.nextUrl.pathname;
+
   const isWebhookOrCron = pathname.startsWith("/api/webhooks/") || pathname.startsWith("/api/cron/");
-  const isPublicApi = ["/api/auth/login", "/api/auth/callback", "/api/health"].some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  const isPublicApi = [
+    "/api/auth/login",
+    "/api/auth/signup",
+    "/api/auth/forgot-password",
+    "/api/auth/update-password",
+    "/api/auth/callback",
+    "/api/health",
+  ].some((p) => pathname === p || pathname.startsWith(`${p}/`));
+
   if (isWebhookOrCron || isPublicApi) return response;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
@@ -25,7 +49,9 @@ export async function proxy(request: NextRequest) {
 
   const supabase = createServerClient(url, key, {
     cookies: {
-      getAll() { return request.cookies.getAll(); },
+      getAll() {
+        return request.cookies.getAll();
+      },
       setAll(items) {
         items.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
@@ -38,12 +64,16 @@ export async function proxy(request: NextRequest) {
   const isProtected = protectedPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   if (isProtected && !data.user) {
-    const redirect = NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(pathname + request.nextUrl.search)}`, request.url));
+    const redirect = NextResponse.redirect(
+      new URL(`/login?next=${encodeURIComponent(pathname + request.nextUrl.search)}`, request.url),
+    );
     return copySupabaseCookies(response, redirect);
   }
 
   if ((pathname === "/login" || pathname === "/signup" || pathname === "/admin/login") && data.user) {
-    const redirect = NextResponse.redirect(new URL(pathname === "/admin/login" ? "/admin" : "/dashboard", request.url));
+    const redirect = NextResponse.redirect(
+      new URL(pathname === "/admin/login" ? "/admin" : "/dashboard", request.url),
+    );
     return copySupabaseCookies(response, redirect);
   }
 
