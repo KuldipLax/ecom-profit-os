@@ -1,2 +1,2 @@
 import { Sidebar } from "./sidebar";import { Topbar } from "./topbar";
-export async function AppShell({children,title,businessName,role}:{children:React.ReactNode;title:string;businessName?:string;role:string}){return <div className="min-h-screen bg-[#f7f8fa]"><div className="flex"><Sidebar role={role}/><div className="min-w-0 flex-1"><Topbar businessName={businessName}/><main className="mx-auto max-w-[1500px] p-4 md:p-6">{children}</main></div></div></div>}
+export async function AppShell({children,title,businessName,role}:{children:React.ReactNode;title:string;businessName?:string;role:string}){return <div className="app"><Sidebar role={role}/><main className="main"><Topbar businessName={businessName}/><div className="page">{children}</div></main></div>}
