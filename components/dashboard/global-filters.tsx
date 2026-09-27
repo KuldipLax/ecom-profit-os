@@ -25,7 +25,7 @@ export function GlobalFilters({ businessId, memberships }: { businessId: string;
 
   return (
     <div className="filters" aria-label="Dashboard filters">
-      <button type="button" className="filter" onClick={() => navigate(rangeFromPreset("30d"))}>
+      <button type="button" className="filter" onClick={() => { const range = rangeFromPreset("30d"); navigate({ start: range.start, end: range.end }); }}>
         {dateText} <span className="muted">⌄</span>
       </button>
       <button type="button" className="filter" onClick={() => navigate({ compare: compare === "Previous period" ? "Same period last year" : "Previous period" })}>
