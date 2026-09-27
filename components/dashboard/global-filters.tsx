@@ -27,7 +27,7 @@ export function GlobalFilters({ businessId }: { businessId: string; memberships?
     }
     router.push(pathname + "?" + next.toString());
   }
-  const preset = (key: "7d" | "14d" | "30d" | "mtd") => {
+  const preset = (key: "7d" | "14d" | "30d" | "month") => {
     const range = rangeFromPreset(key);
     navigate({ start: range.start, end: range.end });
     setOpen(false);
@@ -43,7 +43,7 @@ export function GlobalFilters({ businessId }: { businessId: string; memberships?
               <button type="button" className="choice-item" onClick={() => preset("7d")}>Last 7 days</button>
               <button type="button" className="choice-item" onClick={() => preset("14d")}>Last 14 days</button>
               <button type="button" className="choice-item" onClick={() => preset("30d")}>Last 30 days</button>
-              <button type="button" className="choice-item" onClick={() => preset("mtd")}>Month to date</button>
+              <button type="button" className="choice-item" onClick={() => preset("month")}>Month to date</button>
             </div>
           </div>
         )}
