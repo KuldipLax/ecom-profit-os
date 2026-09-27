@@ -445,7 +445,7 @@ export function IntegrationsPanel({ businessId, integrations, appUrl, oauthAvail
                     {SHIPPING_PROVIDERS.map((provider) => <option value={provider.value} key={provider.value}>{provider.label}{provider.liveApi ? "" : " · setup ready"}</option>)}
                   </select>
                 </div>
-                <div className="integration-provider-note">Credentials are provider-specific. Copy the API token/key and any client/account identifier from the provider's API/Developer section. Do not put credentials in a public note or webhook URL.</div>
+                <div className="integration-provider-note">Credentials are provider-specific. Copy the API token/key and any client/account identifier from the provider’s API/Developer section. Do not put credentials in a public note or webhook URL.</div>
                 <div className="integration-fields">
                   {(SHIPPING_PROVIDERS.find((x) => x.value === shippingProvider)?.fields ?? []).map((field) => (
                     <div className="integration-field" key={field.key}><label>{field.label}{!field.required && <span className="field-optional"> (optional)</span>}</label><Input type={field.type} value={shippingCredentials[field.key] ?? ""} onChange={(e) => setCredential(setShippingCredentials, field.key, e.target.value)} placeholder={field.placeholder} /></div>
@@ -453,7 +453,7 @@ export function IntegrationsPanel({ businessId, integrations, appUrl, oauthAvail
                 </div>
                 <div className="integration-field"><label>Webhook secret <span className="field-optional">(needed to use the webhook URL)</span></label><div className="integration-secret-row"><Input type="password" value={shippingWebhookSecret} onChange={(e) => setShippingWebhookSecret(e.target.value)} placeholder="Paste or generate the webhook secret" /><Button type="button" variant="secondary" size="sm" onClick={() => setShippingWebhookSecret(generateSecret())}>Generate</Button></div></div>
                 <div className="integration-webhook">
-                  <div><Webhook size={13} /><strong>Webhook</strong><span>Paste this URL into the provider's webhook / developer panel</span></div>
+                  <div><Webhook size={13} /><strong>Webhook</strong><span>Paste this URL into the provider’s webhook / developer panel</span></div>
                   <code>{getWebhookUrl(shippingProvider, businessId, origin)}</code>
                   {origin && <button type="button" className="icon-copy" onClick={() => navigator.clipboard?.writeText(getWebhookUrl(shippingProvider, businessId, origin))} aria-label="Copy shipping webhook URL"><Copy size={13} /></button>}
                 </div>
@@ -498,7 +498,7 @@ export function IntegrationsPanel({ businessId, integrations, appUrl, oauthAvail
                     {CHECKOUT_PROVIDERS.map((provider) => <option value={provider.value} key={provider.value}>{provider.label}{provider.liveApi ? "" : " · setup ready"}</option>)}
                   </select>
                 </div>
-                <div className="integration-provider-note">Use the exact API credentials from the payment provider's Developer / API section. Test-mode and production credentials are separate where the provider supports environments.</div>
+                <div className="integration-provider-note">Use the exact API credentials from the payment provider’s Developer / API section. Test-mode and production credentials are separate where the provider supports environments.</div>
                 <div className="integration-fields">
                   {(CHECKOUT_PROVIDERS.find((x) => x.value === checkoutProvider)?.fields ?? []).map((field) => (
                     <div className="integration-field" key={field.key}><label>{field.label}{!field.required && <span className="field-optional"> (optional)</span>}</label><Input type={field.type} value={checkoutCredentials[field.key] ?? ""} onChange={(e) => setCredential(setCheckoutCredentials, field.key, e.target.value)} placeholder={field.placeholder} /></div>
@@ -513,7 +513,7 @@ export function IntegrationsPanel({ businessId, integrations, appUrl, oauthAvail
                 </div>
                 <div className="integration-field"><label>Webhook secret <span className="field-optional">(needed to use the webhook URL)</span></label><div className="integration-secret-row"><Input type="password" value={checkoutWebhookSecret} onChange={(e) => setCheckoutWebhookSecret(e.target.value)} placeholder="Paste or generate the webhook secret" /><Button type="button" variant="secondary" size="sm" onClick={() => setCheckoutWebhookSecret(generateSecret())}>Generate</Button></div></div>
                 <div className="integration-webhook">
-                  <div><Webhook size={13} /><strong>Webhook</strong><span>Paste this URL into the provider's webhook setup</span></div>
+                  <div><Webhook size={13} /><strong>Webhook</strong><span>Paste this URL into the provider’s webhook setup</span></div>
                   <code>{getWebhookUrl(checkoutProvider, businessId, origin)}</code>
                   {origin && <button type="button" className="icon-copy" onClick={() => navigator.clipboard?.writeText(getWebhookUrl(checkoutProvider, businessId, origin))} aria-label="Copy checkout webhook URL"><Copy size={13} /></button>}
                 </div>
