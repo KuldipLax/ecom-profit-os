@@ -63,7 +63,7 @@ export async function proxy(request: NextRequest) {
 
   const { data } = await supabase.auth.getClaims();
   const isAuthenticated = Boolean(data?.claims?.sub);
-  const isProtected = protectedPaths.some((p) => pathname === p || pathname.startsWith(`proxy.ts/`));
+  const isProtected = protectedPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   if (isProtected && !isAuthenticated) {
     const redirect = NextResponse.redirect(
