@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     cookie !== state ||
     !businessId ||
     !code ||
-    !/^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$/i.test(shop)
+    !/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/i.test(shop)
   ) {
     return NextResponse.redirect(new URL("/settings?error=Invalid%20Shopify%20authorization%20response.", request.url));
   }
