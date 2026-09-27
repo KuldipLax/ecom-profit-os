@@ -64,7 +64,15 @@ async function testMeta(credentials: Record<string, string>): Promise<ManualTest
       .map((id) => id.trim())
       .filter(Boolean);
     const available = (accounts.data ?? []).map((item: any) => String(item.id));
-    const selected = requested.length ? requested.filter((id) => available.includes(id) || available.includes(id.replace(/^act_/, "")) || available.includes(`act_${id}`)) : available;
+    const selected = requested.length
+      ? requested
+          .map((id) => available.find((availableId) =>
+            availableId === id ||
+            availableId === id.replace(/^act_/, "") ||
+            availableId === `act_${id}`,
+          ))
+          .filter((id): id is string => Boolean(id))
+      : available;
     if (requested.length && !selected.length) {
       return { supported: true, ok: false, message: "None of the entered ad account IDs are accessible with this token." };
     }
