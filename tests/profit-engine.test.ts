@@ -11,6 +11,7 @@ describe("central profit engine",()=>{
  it("uses MAX(freight, unbilled) shipping",()=>expect(calculateOrderEconomics({...base,status:"DELIVERED"},settings).shipping).toBe(100));
  it("does not add unbilled charges on top of freight",()=>expect(calculateOrderEconomics({...base,shipping:{applicable:true,totalFreight:100,unbilledCharges:150}},settings).shipping).toBe(150));
  it("treats prepaid as effective delivered when enabled",()=>expect(calculateOrderEconomics({...base,status:"SHIPPED"},settings).effectiveStatus).toBe("EFFECTIVE_DELIVERED"));
+ it("tracks effective-delivered units for period calculations",()=>expect(calculatePeriodProfit([{...base,lines:[{quantity:3,unitCost:140}]}],settings).effectiveDeliveredUnits).toBe(3));
  it("does not treat RTO as delivered",()=>{const x=calculateOrderEconomics({...base,status:"RTO_DELIVERED"},settings);expect(x.effectiveDelivered).toBe(false);expect(x.deliveredRevenue).toBe(0);expect(x.effectiveStatus).toBe("RTO")});
  it("does not charge prepaid PG fee to COD",()=>{const x=calculateOrderEconomics({...base,paymentMethod:"cod"},settings);expect(x.pgFee).toBe(0)});
  it("applies Meta GST exactly once at period level",()=>{const r=calculatePeriodProfit([base],settings,10000);expect(r.metaSpend).toBe(10000);expect(r.metaGst).toBe(1800);expect(r.effectiveMarketingCost).toBe(11800);expect(r.netProfit).toBeLessThan(-1)});
