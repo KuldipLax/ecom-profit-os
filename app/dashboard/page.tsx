@@ -5,11 +5,10 @@ import { ProfitTrend } from "@/components/charts/profit-trend";
 import { GlobalFilters } from "@/components/dashboard/global-filters";
 import { getBusinessContext } from "@/lib/auth/business-context";
 import { getMemberships } from "@/lib/auth/require-user";
-import { calculateBusinessPeriodProfit, getDataHealth } from "@/lib/profit-engine/server";
+import { calculateBusinessPeriodProfit, calculateDailyTrend } from "@/lib/profit-engine/server";
 import { getProductProfitability, getRtoIntelligence, getForwardOrders } from "@/lib/analytics/server";
 import { analyticsQuery } from "@/lib/utils/query";
 import { formatCurrency, formatPercent, formatNumber } from "@/lib/utils/format";
-import { calculateDailyTrend } from "@/lib/profit-engine/server";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
