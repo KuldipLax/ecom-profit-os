@@ -1,7 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
-
 type Point = {
   date: string;
   grossSale: number;
@@ -21,7 +19,7 @@ const SERIES = [
   { key: "deliveryRate", label: "Delivery Rate", stroke: "#5e9c79", dash: "4 5", width: 1.7 },
 ] as const;
 
-function pathFor(data: Point[], key: string, usePercent = false) {
+function pathFor(data: Point[], key: string) {
   if (!data.length) return "";
   const values = data.map((x) => Number((x as any)[key] ?? 0));
   const min = Math.min(...values, 0);
@@ -48,15 +46,10 @@ export function ProfitTrend({ data }: { data: Point[] }) {
     : [];
   const active = new Set(["grossSale", "deliveredRevenue", "netProfit"]);
   const hasData = data.some((x) => Number(x.grossSale ?? 0) !== 0 || Number(x.deliveredRevenue ?? 0) !== 0 || Number(x.netProfit ?? 0) !== 0 || Number(x.marketing ?? 0) !== 0);
-
-  const paths = useMemo(
-    () =>
-      SERIES.map((series) => ({
-        ...series,
-        d: pathFor(data, series.key, series.key === "rto" || series.key === "deliveryRate"),
-      })),
-    [data],
-  );
+  const paths = SERIES.map((series) => ({
+    ...series,
+    d: pathFor(data, series.key),
+  }));
 
   return (
     <>
