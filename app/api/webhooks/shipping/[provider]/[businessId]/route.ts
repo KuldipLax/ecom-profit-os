@@ -51,7 +51,8 @@ export async function POST(
   const credentials = JSON.parse(decryptSecret(account.credentials_encrypted));
   const secret = String(credentials.webhookSecret ?? "");
   const provided = request.headers.get("x-api-key") ?? request.headers.get("x-webhook-secret") ?? request.headers.get("x-webhook-signature") ?? "";
-  if (secret && !timingSafeEqualString(provided, secret)) return NextResponse.json({ error: "Invalid webhook secret." }, { status: 401 });
+  if (!secret) return NextResponse.json({ error: "Webhook secret is not configured for this integration." }, { status: 409 });
+  if (!timingSafeEqualString(provided, secret)) return NextResponse.json({ error: "Invalid webhook secret." }, { status: 401 });
 
   const eventId = String(
     request.headers.get("x-event-id")
