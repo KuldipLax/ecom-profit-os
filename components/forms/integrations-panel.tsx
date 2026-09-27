@@ -36,8 +36,21 @@ type Props = {
 };
 
 type Credentials = Record<string, string>;
+type ProviderField = {
+  key: string;
+  label: string;
+  type: "text" | "password" | "email";
+  placeholder?: string;
+  required?: boolean;
+};
+type ProviderConfig = {
+  value: string;
+  label: string;
+  liveApi?: boolean;
+  fields: readonly ProviderField[];
+};
 
-const SHIPPING_PROVIDERS = [
+const SHIPPING_PROVIDERS: ProviderConfig[] = [
   { value: "shiprocket", label: "Shiprocket", liveApi: true, fields: [
     { key: "email", label: "API-user email", type: "email", placeholder: "api-user@example.com", required: true },
     { key: "password", label: "API-user password", type: "password", placeholder: "••••••••", required: true },
@@ -66,9 +79,9 @@ const SHIPPING_PROVIDERS = [
     { key: "customerCode", label: "Customer code", type: "text", placeholder: "Provider-issued customer code" },
     { key: "password", label: "Password / secret", type: "password", placeholder: "••••••••" },
   ]},
-] as const;
+];
 
-const CHECKOUT_PROVIDERS = [
+const CHECKOUT_PROVIDERS: ProviderConfig[] = [
   { value: "razorpay", label: "Razorpay", liveApi: true, fields: [
     { key: "keyId", label: "Key ID", type: "text", placeholder: "rzp_...", required: true },
     { key: "keySecret", label: "Key secret", type: "password", placeholder: "••••••••", required: true },
@@ -87,7 +100,7 @@ const CHECKOUT_PROVIDERS = [
     { key: "clientVersion", label: "Client version", type: "text", placeholder: "As provided by PhonePe" },
     { key: "saltKey", label: "Salt key", type: "password", placeholder: "••••••••" },
   ]},
-] as const;
+];
 
 async function requestJson(url: string, init: RequestInit, timeoutMs = 30000) {
   const controller = new AbortController();
