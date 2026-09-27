@@ -131,10 +131,10 @@ export function IntegrationsPanel({ businessId, integrations, oauthAvailable = {
   const [shopifyWebhookSecret, setShopifyWebhookSecret] = useState("");
   const [metaToken, setMetaToken] = useState("");
   const [metaAccountIds, setMetaAccountIds] = useState("");
-  const [shippingProvider, setShippingProvider] = useState("shiprocket");
+  const [shippingProvider, setShippingProvider] = useState(() => SHIPPING_PROVIDERS.find((provider) => integrations.some((item) => item.provider === provider.value && item.metadata?.setup_state === "saved"))?.value ?? "shiprocket");
   const [shippingCredentials, setShippingCredentials] = useState<Credentials>({});
   const [shippingWebhookSecret, setShippingWebhookSecret] = useState("");
-  const [checkoutProvider, setCheckoutProvider] = useState("razorpay");
+  const [checkoutProvider, setCheckoutProvider] = useState(() => CHECKOUT_PROVIDERS.find((provider) => integrations.some((item) => item.provider === provider.value && item.metadata?.setup_state === "saved"))?.value ?? "razorpay");
   const [checkoutCredentials, setCheckoutCredentials] = useState<Credentials>({});
   const [checkoutWebhookSecret, setCheckoutWebhookSecret] = useState("");
   const [metaSelected, setMetaSelected] = useState<string[]>(
@@ -157,6 +157,8 @@ export function IntegrationsPanel({ businessId, integrations, oauthAvailable = {
   const openCard = (key: string) => setOpen((current) => ({ ...current, [key]: !current[key] }));
   const setCredential = (setter: React.Dispatch<React.SetStateAction<Credentials>>, key: string, value: string) =>
     setter((current) => ({ ...current, [key]: value }));
+
+  const generateSecret = () => crypto.randomUUID().replaceAll("-", "") + crypto.randomUUID().replaceAll("-", "");
 
   async function testManual(provider: string, credentials: Credentials) {
     setBusy(`test:${provider}`);
@@ -308,7 +310,7 @@ export function IntegrationsPanel({ businessId, integrations, oauthAvailable = {
                       <div className="integration-field"><label>Store domain</label><Input value={shop} onChange={(e) => setShop(e.target.value.trim())} placeholder="your-store.myshopify.com" /></div>
                       <div className="integration-field"><label>Admin API access token</label><Input type="password" value={shopifyToken} onChange={(e) => setShopifyToken(e.target.value)} placeholder="Paste the Admin API token" /></div>
                     </div>
-                    <div className="integration-field"><label>Webhook secret <span className="field-optional">(optional but recommended)</span></label><Input type="password" value={shopifyWebhookSecret} onChange={(e) => setShopifyWebhookSecret(e.target.value)} placeholder="Secret used to authenticate Shopify webhook calls" /></div>
+                    <div className="integration-field"><label>Webhook secret <span className="field-optional">(needed to use the webhook URL)</span></label><div className="integration-secret-row"><Input type="password" value={shopifyWebhookSecret} onChange={(e) => setShopifyWebhookSecret(e.target.value)} placeholder="Paste or generate a webhook secret" /><Button type="button" variant="secondary" size="sm" onClick={() => setShopifyWebhookSecret(generateSecret())}>Generate</Button></div></div>
                     <div className="integration-help-list">
                       <span>Shopify Admin → Apps and sales channels / Develop apps → configure Admin API scopes → install or generate the token → paste it here.</span>
                       <span>Required data scopes are controlled by your app setup; this product needs order, product and fulfillment read access.</span>
@@ -435,7 +437,7 @@ export function IntegrationsPanel({ businessId, integrations, oauthAvailable = {
                     <div className="integration-field" key={field.key}><label>{field.label}{!field.required && <span className="field-optional"> (optional)</span>}</label><Input type={field.type} value={shippingCredentials[field.key] ?? ""} onChange={(e) => setCredential(setShippingCredentials, field.key, e.target.value)} placeholder={field.placeholder} /></div>
                   ))}
                 </div>
-                <div className="integration-field"><label>Webhook secret <span className="field-optional">(optional but recommended)</span></label><Input type="password" value={shippingWebhookSecret} onChange={(e) => setShippingWebhookSecret(e.target.value)} placeholder="Secret/token required by this provider's webhook configuration" /></div>
+                <div className="integration-field"><label>Webhook secret <span className="field-optional">(needed to use the webhook URL)</span></label><div className="integration-secret-row"><Input type="password" value={shippingWebhookSecret} onChange={(e) => setShippingWebhookSecret(e.target.value)} placeholder="Paste or generate the webhook secret" /><Button type="button" variant="secondary" size="sm" onClick={() => setShippingWebhookSecret(generateSecret())}>Generate</Button></div></div>
                 <div className="integration-webhook">
                   <div><Webhook size={13} /><strong>Webhook</strong><span>Paste this URL into the provider's webhook / developer panel</span></div>
                   <code>{getWebhookUrl(shippingProvider, businessId, origin)}</code>
@@ -495,7 +497,7 @@ export function IntegrationsPanel({ businessId, integrations, oauthAvailable = {
                     <option value="test">Test / Sandbox</option>
                   </select>
                 </div>
-                <div className="integration-field"><label>Webhook secret <span className="field-optional">(optional but recommended)</span></label><Input type="password" value={checkoutWebhookSecret} onChange={(e) => setCheckoutWebhookSecret(e.target.value)} placeholder="Secret used to validate provider webhooks" /></div>
+                <div className="integration-field"><label>Webhook secret <span className="field-optional">(needed to use the webhook URL)</span></label><div className="integration-secret-row"><Input type="password" value={checkoutWebhookSecret} onChange={(e) => setCheckoutWebhookSecret(e.target.value)} placeholder="Paste or generate the webhook secret" /><Button type="button" variant="secondary" size="sm" onClick={() => setCheckoutWebhookSecret(generateSecret())}>Generate</Button></div></div>
                 <div className="integration-webhook">
                   <div><Webhook size={13} /><strong>Webhook</strong><span>Paste this URL into the provider's webhook setup</span></div>
                   <code>{getWebhookUrl(checkoutProvider, businessId, origin)}</code>
