@@ -7,6 +7,48 @@ import { timingSafeEqualString } from "@/lib/security/hmac";
 
 export const runtime = "nodejs";
 
+function paymentMethod(raw: unknown) {
+  return /cod/i.test(String(raw ?? "")) ? "cod" : "prepaid";
+}
+
+async function processRazorpayPayment(s: ReturnType<typeof createAdminClient>, businessId: string, payload: any) {
+  const entity = payload?.payload?.payment?.entity;
+  if (!entity?.id) return false;
+
+  let orderId: string | null = null;
+  if (entity.order_id) {
+    const { data } = await s.from("orders")
+      .select("id")
+      .eq("business_id", businessId)
+      .or(`external_order_id.eq.${entity.order_id},order_number.eq.${entity.order_id}`)
+      .limit(1)
+      .maybeSingle();
+    orderId = data?.id ?? null;
+  }
+
+  const amount = Number(entity.amount ?? 0) / 100;
+  const fee = entity.fee == null ? null : Number(entity.fee) / 100;
+  const tax = entity.tax == null ? null : Number(entity.tax) / 100;
+  const createdAt = entity.created_at ? new Date(Number(entity.created_at) * 1000).toISOString() : new Date().toISOString();
+
+  const { error } = await s.from("payment_transactions").upsert({
+    business_id: businessId,
+    provider: "razorpay",
+    external_transaction_id: String(entity.id),
+    order_id: orderId,
+    status: String(entity.status ?? payload?.event ?? "unknown"),
+    amount,
+    fee,
+    gst_amount: tax,
+    transaction_date: createdAt,
+    payment_method: paymentMethod(entity.method),
+    source_payload: payload,
+  }, { onConflict: "business_id,provider,external_transaction_id" });
+
+  if (error) throw error;
+  return true;
+}
+
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ provider: string; businessId: string }> },
@@ -35,9 +77,15 @@ export async function POST(
 
   const credentials = JSON.parse(decryptSecret(account.credentials_encrypted));
   const secret = String(credentials.webhookSecret ?? "");
-  const provided = request.headers.get("x-api-key") ?? request.headers.get("x-webhook-secret") ?? request.headers.get("x-razorpay-signature") ?? "";
+  const provided =
+    request.headers.get("x-razorpay-signature") ??
+    request.headers.get("x-api-key") ??
+    request.headers.get("x-webhook-secret") ??
+    request.headers.get("x-webhook-signature") ??
+    "";
 
   if (!secret) return NextResponse.json({ error: "Webhook secret is not configured for this integration." }, { status: 409 });
+
   if (provider === "razorpay") {
     const expected = crypto.createHmac("sha256", secret).update(raw).digest("hex");
     if (!timingSafeEqualString(provided, expected)) return NextResponse.json({ error: "Invalid checkout webhook signature." }, { status: 401 });
@@ -45,7 +93,15 @@ export async function POST(
     return NextResponse.json({ error: "Invalid checkout webhook secret." }, { status: 401 });
   }
 
-  const eventId = String(request.headers.get("x-event-id") ?? request.headers.get("x-webhook-id") ?? payload?.id ?? payload?.event_id ?? randomUUID());
+  const eventId = String(
+    request.headers.get("x-razorpay-event-id") ??
+    request.headers.get("x-event-id") ??
+    request.headers.get("x-webhook-id") ??
+    payload?.id ??
+    payload?.event_id ??
+    randomUUID(),
+  );
+
   const insert = await s.from("webhook_events").insert({
     business_id: businessId,
     provider,
@@ -61,5 +117,23 @@ export async function POST(
     return NextResponse.json({ error: "Webhook storage failed." }, { status: 500 });
   }
 
-  return NextResponse.json({ received: true });
+  try {
+    if (provider === "razorpay") {
+      await processRazorpayPayment(s, businessId, payload);
+    }
+
+    await s.from("webhook_events").update({
+      status: "processed",
+      processed_at: new Date().toISOString(),
+    }).eq("provider", provider).eq("external_event_id", eventId);
+
+    return NextResponse.json({ received: true, processed: true });
+  } catch (error) {
+    await s.from("webhook_events").update({
+      status: "failed",
+      error_message: error instanceof Error ? error.message : String(error),
+    }).eq("provider", provider).eq("external_event_id", eventId);
+
+    return NextResponse.json({ error: "Webhook was received but processing failed." }, { status: 500 });
+  }
 }
