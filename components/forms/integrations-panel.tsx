@@ -31,6 +31,7 @@ type IntegrationRow = {
 type Props = {
   businessId: string;
   integrations: IntegrationRow[];
+  appUrl: string;
   oauthAvailable?: { shopify: boolean; meta: boolean };
 };
 
@@ -118,7 +119,7 @@ function getWebhookUrl(provider: string, businessId: string, origin: string) {
   return `${origin}/api/webhooks/${provider === "razorpay" || provider === "cashfree" || provider === "payu" || provider === "phonepe" ? "checkout" : "shipping"}/${provider}/${businessId}`;
 }
 
-export function IntegrationsPanel({ businessId, integrations, oauthAvailable = { shopify: false, meta: false } }: Props) {
+export function IntegrationsPanel({ businessId, integrations, appUrl, oauthAvailable = { shopify: false, meta: false } }: Props) {
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
@@ -152,7 +153,7 @@ export function IntegrationsPanel({ businessId, integrations, oauthAvailable = {
   const shippingSaved = Boolean(saved.shipping || shipping?.metadata?.setup_state === "saved" || shipping?.status === "connected");
   const checkoutSaved = Boolean(saved.checkout || checkout?.metadata?.setup_state === "saved" || checkout?.status === "connected");
 
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const origin = appUrl.replace(/\/$/, "");
 
   const openCard = (key: string) => setOpen((current) => ({ ...current, [key]: !current[key] }));
   const setCredential = (setter: React.Dispatch<React.SetStateAction<Credentials>>, key: string, value: string) =>
