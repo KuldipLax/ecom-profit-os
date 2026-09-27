@@ -1,60 +1,109 @@
 # API Integration Guide
 
-## Environment
+## Security
 
-All provider secrets are server-side only. Never put service-role keys, provider client secrets, bearer tokens or `ENCRYPTION_KEY` in `NEXT_PUBLIC_*` variables.
+Provider credentials are sent only to server-side routes and stored encrypted in `integration_accounts.credentials_encrypted`. Never place provider secrets, Supabase service-role credentials or `ENCRYPTION_KEY` in `NEXT_PUBLIC_*` variables.
+
+Settings → Connections keeps each integration card collapsed until the user opens it. A successful manual save shows a green **Saved** state. A provider is only marked **connected** when its live connection test succeeds; providers without a live adapter remain saved but are not falsely presented as synced.
 
 ## Shopify
 
-The app uses Shopify's Admin GraphQL API. Configure a Shopify app with:
+### Automatic
 
-- Client ID / secret
+The normal standalone-app path redirects the merchant to Shopify, exchanges the authorization code for an Admin API access token, stores it encrypted and enables background sync.
+
+Configure server-side:
+
+- Shopify Client ID / secret
 - Redirect URL: `${NEXT_PUBLIC_APP_URL}/api/integrations/shopify/callback`
 - Webhook callback URL: `${NEXT_PUBLIC_APP_URL}/api/webhooks/shopify`
-- Required scopes: configured with `SHOPIFY_SCOPES`
+- Required Admin API scopes through the Shopify app configuration
 
-The app stores the offline access token encrypted. Initial sync fetches orders and their line items; repeat sync upserts by business + provider + source order ID and also preserves unique order number. The webhook endpoint validates the Shopify HMAC, records the event and queues a safe follow-up sync.
+### Manual
 
-Current configuration defaults to Shopify API version `2026-07`; update `SHOPIFY_API_VERSION` through environment configuration as supported versions advance.
+The dashboard accepts:
+
+- Store domain
+- Admin API access token
+- Optional webhook secret
+
+The **Test Connection** action calls the store's Admin GraphQL API before save. Shopify access tokens are scoped credentials and are sent in the `X-Shopify-Access-Token` header. The manual flow is intended for an existing/custom merchant app token; it is not a replacement for Shopify app OAuth on arbitrary third-party stores.
 
 ## Meta Ads
 
-Configure a Meta app with:
+### Automatic
 
-- App ID / secret
-- Redirect URL: `${NEXT_PUBLIC_APP_URL}/api/integrations/meta/callback`
-- Permissions represented by `META_SCOPES`
-- A `META_API_VERSION`
+The platform OAuth flow discovers accessible ad accounts. After authorization, the dashboard can select which ad accounts to include in sync.
 
-OAuth discovers accessible ad accounts and stores the token encrypted. Daily ad-level insight rows are keyed by date + ad account + campaign + ad set + ad. Repeated sync is idempotent.
+Configure server-side:
 
-The application stores provider spend as raw Meta spend. GST is calculated by the shared accounting engine.
+- Meta App ID / secret
+- Callback URL: `${NEXT_PUBLIC_APP_URL}/api/integrations/meta/callback`
+- Meta API version
+- Requested permissions
 
-## Shiprocket
+### Manual
 
-Configure the Shiprocket API-user email and password. The adapter authenticates against the external API and normalizes shipment rows into the common `shipping_orders` schema.
+The dashboard accepts:
 
-The shipping layer is abstracted behind `ShippingProviderAdapter`, so future Delhivery/Xpressbees/Blue Dart adapters should implement the same normalization contract rather than duplicating P&L rules. Shiprocket tracking updates are accepted through the webhook route and authenticated with `SHIPROCKET_WEBHOOK_SECRET` against the provider webhook header; events are stored idempotently before order status processing.
+- Access token
+- One or more ad account IDs
 
-## Checkout/payment
+**Test Connection** calls Meta's accessible-ad-accounts endpoint and checks that the requested IDs are available before saving.
 
-There is a `CheckoutProviderAdapter` interface. When a direct provider integration is not available, the Settings page exposes a durable manual transaction form and Reports exposes secure CSV import. The system does not create synthetic provider data.
+## Shipping & logistics
 
-Payment gateway cost rules are configurable. A provider integration may populate `payment_transactions` when its API is implemented.
+The dashboard is provider-agnostic. Available setup cards include:
 
-## CSV
+- Shiprocket
+- Delhivery
+- Xpressbees
+- Ecom Express
+- Blue Dart
+- DTDC
 
-Endpoint: `POST /api/csv/import`
+Provider credentials vary by account. The UI therefore exposes provider-specific labels for common fields and stores the complete credential payload encrypted.
 
-Form fields:
+### Shiprocket live adapter
 
-- `businessId`
-- `provider`: `shopify | shiprocket | checkout | custom`
-- `mode`: `preview | import`
-- `file`
-- `mapping` JSON during import
+Shiprocket is currently supported for live API authentication and background shipment sync. Its documented flow is: create an API user, obtain API credentials, authenticate against the Shiprocket authentication API, then use the bearer token for subsequent calls. Tracking webhooks use the provider's webhook URL and security token.
 
-Files are written to the private `csv-imports` Supabase Storage bucket under `<businessId>/<importId>/...`.
+### Other couriers
+
+Delhivery, Xpressbees, Ecom Express, Blue Dart and DTDC can be saved as manual configurations and can receive provider webhook events through the generated per-business endpoint. A live polling/sync adapter is enabled only after the exact provider API contract is implemented; the UI never labels a saved-but-untested provider as connected.
+
+Webhook endpoint pattern:
+
+`POST ${NEXT_PUBLIC_APP_URL}/api/webhooks/shipping/{provider}/{businessId}`
+
+The webhook secret is stored encrypted. Provider-specific signature formats still need to be respected; the generic endpoint supports shared-secret/header patterns and safely records unrecognized payloads.
+
+## Checkout & payments
+
+Supported configuration cards:
+
+- Razorpay
+- Cashfree
+- PayU
+- PhonePe
+
+The dashboard exposes API credential fields, environment selection, webhook secret and a copyable webhook URL.
+
+### Razorpay live adapter
+
+Razorpay API credentials are tested using Basic Authentication and the payment API. The adapter can also pull payment transactions into `payment_transactions`. The sync job matches a returned provider order ID to either `orders.external_order_id` or `orders.order_number` when a match exists.
+
+Webhook endpoint pattern:
+
+`POST ${NEXT_PUBLIC_APP_URL}/api/webhooks/checkout/{provider}/{businessId}`
+
+For Razorpay, the webhook body is validated with HMAC-SHA256 using the webhook secret before it is accepted.
+
+Cashfree, PayU and PhonePe are currently **manual-configuration ready** but do not receive a fake "connected" status until a dedicated live transaction adapter is added.
+
+## Manual checkout fallback
+
+The existing durable manual transaction form remains available for any payment provider while its direct API adapter is unavailable. CSV import remains available through Reports.
 
 ## Background sync
 
@@ -64,15 +113,18 @@ Authorization:
 
 `Authorization: Bearer ${CRON_SECRET}`
 
-Vercel invokes this on the schedule configured in `vercel.json`; the default is daily for Vercel Hobby compatibility. The endpoint loads configured integrations and runs provider sync adapters. Each sync records `sync_jobs` and updates integration state to `connected`, `syncing` or `failed`.
+The scheduler runs connected Shopify, Meta, Shiprocket and Razorpay integrations and persists sync jobs plus daily aggregates.
 
-## Error behavior
+## Data model
 
-Client-facing API errors use actionable language such as:
+All provider adapters normalize their data into shared tables:
 
-- Shopify connection expired. Reconnect Shopify.
-- Shipping sync failed. Retry sync.
-- Meta account permission expired.
-- CSV validation failed; inspect the import summary.
+- Orders / order items
+- Shipping orders / shipping events
+- Marketing accounts / marketing spend
+- Payment transactions / checkout transactions
+- Webhook events
+- Sync jobs / sync logs
+- Audit logs
 
-Detailed provider errors remain in server-side sync logs and audit records.
+This keeps the profitability engine independent of the provider name.
