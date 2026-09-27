@@ -1,10 +1,29 @@
 "use client";
 
 import { useState } from "react";
+import { Store, Facebook, Truck, CreditCard, RefreshCw, Unplug, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
+async function requestJson(url: string, init: RequestInit, timeoutMs = 30000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...init, cache: "no-store", credentials: "same-origin", signal: controller.signal });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body.error ?? "Request failed.");
+    return body;
+  } catch (error: any) {
+    if (error?.name === "AbortError") throw new Error("Request timed out. Please try again.");
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function IconBox({ children }: { children: React.ReactNode }) {
+  return <div className="integration-logo">{children}</div>;
+}
 
 export function IntegrationsPanel({ businessId, integrations }: { businessId: string; integrations: any[] }) {
   const [shop, setShop] = useState("");
@@ -14,129 +33,122 @@ export function IntegrationsPanel({ businessId, integrations }: { businessId: st
   const [busy, setBusy] = useState("");
 
   const get = (provider: string) => integrations.find((item) => item.provider === provider);
-
-  async function sync(path: string) {
-    setBusy(path);
+  const run = async (key: string, url: string, init: RequestInit) => {
+    setBusy(key);
     setMessage("");
     try {
-      const response = await fetch(path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessId }),
-      });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error);
-      setMessage("Sync completed. Refresh the page to see the latest timestamp.");
+      await requestJson(url, init);
+      setMessage("Done. Refresh the page to see the latest connection state.");
     } catch (error: any) {
-      setMessage(error?.message ?? "Sync failed.");
+      setMessage(error?.message ?? "Request failed.");
     } finally {
       setBusy("");
     }
-  }
+  };
 
-  async function disconnect(provider: string) {
-    setBusy(`disconnect:${provider}`);
+  async function connectShiprocket() {
+    setBusy("shiprocket");
     setMessage("");
     try {
-      const response = await fetch("/api/integrations/disconnect", {
+      await requestJson("/api/integrations/shipping/connect", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessId, provider }),
-      });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error);
-      setMessage(`${provider} disconnected. Refresh this page.`);
-    } catch (error: any) {
-      setMessage(error?.message ?? "Disconnect failed.");
-    } finally {
-      setBusy("");
-    }
-  }
-
-  async function connectShip() {
-    setBusy("ship");
-    setMessage("");
-    try {
-      const response = await fetch("/api/integrations/shipping/connect", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ businessId, email, password }),
       });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error);
-      setMessage("Shiprocket connected. Refresh this page.");
       setEmail("");
       setPassword("");
+      setMessage("Shiprocket connected. Refresh to confirm the connection.");
     } catch (error: any) {
-      setMessage(error?.message ?? "Connection failed.");
-    } finally {
-      setBusy("");
-    }
-  }
-
-  async function selectMeta() {
-    const integration = get("meta");
-    const defaultIds = ((integration?.metadata?.selected_ad_account_ids ?? integration?.metadata?.ad_accounts?.map((item: any) => item.id) ?? []) as string[]).join(",");
-    const ids = window.prompt("Enter Meta ad account IDs, comma-separated", defaultIds);
-    if (ids === null) return;
-    const accountIds = ids.split(",").map((item) => item.trim()).filter(Boolean);
-    setBusy("meta-select");
-    try {
-      const response = await fetch("/api/integrations/meta/select", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessId, accountIds }),
-      });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error);
-      setMessage("Meta ad-account selection saved. Refresh this page.");
-    } catch (error: any) {
-      setMessage(error?.message ?? "Could not save Meta ad-account selection.");
+      setMessage(error?.message ?? "Shiprocket connection failed.");
     } finally {
       setBusy("");
     }
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-lg border bg-white p-5">
-          <div className="flex justify-between"><div className="text-sm font-semibold">Shopify</div><Badge variant={get("shopify")?.status === "connected" ? "success" : "default"}>{get("shopify")?.status ?? "Not connected"}</Badge></div>
-          <p className="mt-1 text-xs text-slate-500">GraphQL Admin API + OAuth + signed webhooks.</p>
-          <div className="mt-4"><Label>Store domain</Label><Input value={shop} onChange={(e) => setShop(e.target.value)} placeholder="store.myshopify.com" /></div>
-          <a className="mt-3 inline-flex h-9 items-center rounded-md bg-slate-900 px-3 text-xs text-white" href={`/api/integrations/shopify/start?businessId=${businessId}&shop=${encodeURIComponent(shop)}`}>Connect Shopify</a>
-          <Button variant="secondary" className="mt-2 w-full" onClick={() => sync("/api/integrations/shopify/sync")} disabled={!!busy}>{busy === "/api/integrations/shopify/sync" ? "Syncing…" : "Sync Now"}</Button>
-          {get("shopify")?.error_message && <div className="mt-2 text-[10px] text-rose-600">{get("shopify").error_message}</div>}
-          {get("shopify")?.last_sync_at && <div className="mt-2 text-[10px] text-slate-400">Last sync {new Date(get("shopify").last_sync_at).toLocaleString()}</div>}
-          <Button variant="ghost" className="mt-2 w-full" onClick={() => disconnect("shopify")} disabled={!!busy}>Disconnect</Button>
+    <div className="settings-stack">
+      <div className="card settings-card-wide">
+        <div className="settings-card-head">
+          <div>
+            <h3>Connections</h3>
+            <p>Connect the systems that provide order, shipping and marketing data.</p>
+          </div>
         </div>
 
-        <div className="rounded-lg border bg-white p-5">
-          <div className="flex justify-between"><div className="text-sm font-semibold">Meta Ads</div><Badge variant={get("meta")?.status === "connected" ? "success" : "default"}>{get("meta")?.status ?? "Not connected"}</Badge></div>
-          <p className="mt-1 text-xs text-slate-500">OAuth ad-account discovery + daily ad-level insights.</p>
-          <a className="mt-4 inline-flex h-9 items-center rounded-md bg-slate-900 px-3 text-xs text-white" href={`/api/integrations/meta/start?businessId=${businessId}`}>Connect Meta</a>
-          <Button variant="secondary" className="mt-2 w-full" onClick={selectMeta} disabled={!!busy || get("meta")?.status !== "connected"}>Select Ad Accounts</Button>
-          <Button variant="secondary" className="mt-2 w-full" onClick={() => sync("/api/integrations/meta/sync")} disabled={!!busy}>{busy === "/api/integrations/meta/sync" ? "Syncing…" : "Sync Now"}</Button>
-          {get("meta")?.last_sync_at && <div className="mt-2 text-[10px] text-slate-400">Last sync {new Date(get("meta").last_sync_at).toLocaleString()}</div>}
-          <Button variant="ghost" className="mt-2 w-full" onClick={() => disconnect("meta")} disabled={!!busy}>Disconnect</Button>
-        </div>
+        <div className="integration-grid">
+          <div className="integration-card integration-card-stack">
+            <div className="integration-card-top">
+              <IconBox><Store size={22} strokeWidth={1.6} /></IconBox>
+              <div className="integration-copy"><strong>Shopify</strong><span>Orders, products, variants and customers</span></div>
+              <span className={"integration-status " + (get("shopify")?.status === "connected" ? "" : "off")}>{get("shopify")?.status ?? "Not connected"}</span>
+            </div>
+            <div className="integration-field">
+              <label>Store domain</label>
+              <Input value={shop} onChange={(e) => setShop(e.target.value.trim())} placeholder="your-store.myshopify.com" />
+              <div className="form-help">Shopify app client ID/secret stay server-side. Enter only the store domain here.</div>
+            </div>
+            <div className="integration-actions">
+              <a className="primary-btn" href={"/api/integrations/shopify/start?businessId=" + businessId + "&shop=" + encodeURIComponent(shop)} aria-disabled={!shop} onClick={(e) => { if (!shop) e.preventDefault(); }}>Connect Shopify <ExternalLink size={12} /></a>
+              <Button variant="secondary" size="sm" onClick={() => run("shopify-sync", "/api/integrations/shopify/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ businessId }) })} disabled={!!busy || get("shopify")?.status !== "connected"}>
+                <RefreshCw size={12} /> {busy === "shopify-sync" ? "Syncing…" : "Sync Now"}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => run("shopify-disconnect", "/api/integrations/disconnect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ businessId, provider: "shopify" }) })} disabled={!!busy}>
+                <Unplug size={12} /> Disconnect
+              </Button>
+            </div>
+          </div>
 
-        <div className="rounded-lg border bg-white p-5">
-          <div className="flex justify-between"><div className="text-sm font-semibold">Shiprocket</div><Badge variant={get("shiprocket")?.status === "connected" ? "success" : "default"}>{get("shiprocket")?.status ?? "Not connected"}</Badge></div>
-          <p className="mt-1 text-xs text-slate-500">Provider adapter normalizes shipment status + charges.</p>
-          <div className="mt-4 space-y-3"><div><Label>API-user email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div><div><Label>API-user password</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} /></div></div>
-          <Button className="mt-3 w-full" onClick={connectShip} disabled={!!busy}>{busy === "ship" ? "Checking…" : "Connect Shiprocket"}</Button>
-          <Button variant="secondary" className="mt-2 w-full" onClick={() => sync("/api/integrations/shipping/sync")} disabled={!!busy}>{busy === "/api/integrations/shipping/sync" ? "Syncing…" : "Sync Now"}</Button>
-          <Button variant="ghost" className="mt-2 w-full" onClick={() => disconnect("shiprocket")} disabled={!!busy}>Disconnect</Button>
-        </div>
+          <div className="integration-card integration-card-stack">
+            <div className="integration-card-top">
+              <IconBox><Facebook size={22} strokeWidth={1.6} /></IconBox>
+              <div className="integration-copy"><strong>Meta Ads</strong><span>Account, campaign, ad set, ad and spend data</span></div>
+              <span className={"integration-status " + (get("meta")?.status === "connected" ? "" : "off")}>{get("meta")?.status ?? "Not connected"}</span>
+            </div>
+            <div className="integration-actions integration-actions-bottom">
+              <a className="primary-btn" href={"/api/integrations/meta/start?businessId=" + businessId}>Connect Meta <ExternalLink size={12} /></a>
+              <Button variant="secondary" size="sm" onClick={() => run("meta-sync", "/api/integrations/meta/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ businessId }) })} disabled={!!busy || get("meta")?.status !== "connected"}>
+                <RefreshCw size={12} /> {busy === "meta-sync" ? "Syncing…" : "Sync Now"}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => run("meta-disconnect", "/api/integrations/disconnect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ businessId, provider: "meta" }) })} disabled={!!busy}>
+                <Unplug size={12} /> Disconnect
+              </Button>
+            </div>
+          </div>
 
-        <div className="rounded-lg border bg-white p-5">
-          <div className="flex justify-between"><div className="text-sm font-semibold">Checkout</div><Badge variant={get("checkout")?.status === "connected" ? "success" : "default"}>{get("checkout")?.status ?? "not_configured"}</Badge></div>
-          <p className="mt-1 text-xs text-slate-500">No native provider is fabricated. Use manual entry or secure CSV import until a checkout adapter is configured.</p>
-          <a className="mt-4 inline-flex h-9 items-center rounded-md border px-3 text-xs" href="/reports">Open CSV import</a>
+          <div className="integration-card integration-card-stack">
+            <div className="integration-card-top">
+              <IconBox><Truck size={22} strokeWidth={1.6} /></IconBox>
+              <div className="integration-copy"><strong>Shipping account</strong><span>Courier, freight, RTO and unbilled charges</span></div>
+              <span className={"integration-status " + (get("shiprocket")?.status === "connected" ? "" : "off")}>{get("shiprocket")?.status ?? "Not connected"}</span>
+            </div>
+            <div className="integration-fields">
+              <div className="integration-field"><label>API-user email</label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="api-user@example.com" /></div>
+              <div className="integration-field"><label>API-user password</label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" /></div>
+            </div>
+            <div className="integration-actions">
+              <Button size="sm" onClick={connectShiprocket} disabled={!!busy || !email || !password}>{busy === "shiprocket" ? "Checking…" : "Connect Shiprocket"}</Button>
+              <Button variant="secondary" size="sm" onClick={() => run("ship-sync", "/api/integrations/shipping/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ businessId }) })} disabled={!!busy || get("shiprocket")?.status !== "connected"}>
+                <RefreshCw size={12} /> {busy === "ship-sync" ? "Syncing…" : "Sync Now"}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => run("ship-disconnect", "/api/integrations/disconnect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ businessId, provider: "shiprocket" }) })} disabled={!!busy}>
+                <Unplug size={12} /> Disconnect
+              </Button>
+            </div>
+          </div>
+
+          <div className="integration-card integration-card-stack">
+            <div className="integration-card-top">
+              <IconBox><CreditCard size={22} strokeWidth={1.6} /></IconBox>
+              <div className="integration-copy"><strong>Checkout / tracking</strong><span>Manual or CSV payment/checkout data until a supported adapter is configured</span></div>
+              <span className="integration-status off">{get("checkout")?.status ?? "Not connected"}</span>
+            </div>
+            <div className="integration-actions integration-actions-bottom">
+              <a className="secondary-btn" href={"/reports?business=" + businessId}>Open CSV import</a>
+            </div>
+          </div>
         </div>
       </div>
-      {message && <div className="rounded-md border bg-white px-4 py-3 text-xs text-slate-600">{message}</div>}
+      {message && <div className="notice-card">{message}</div>}
     </div>
   );
 }
