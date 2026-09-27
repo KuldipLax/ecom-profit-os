@@ -72,7 +72,7 @@ async function testMeta(credentials: Record<string, string>): Promise<ManualTest
       supported: true,
       ok: true,
       message: "Meta API connection verified.",
-      details: { accessibleAccounts: available.length, selectedAccounts: selected.length, adAccounts: accounts.data ?? [] },
+      details: { accessibleAccounts: available.length, selectedAccounts: selected.length, selectedIds: selected, adAccounts: accounts.data ?? [] },
     };
   } catch (error) {
     return { supported: true, ok: false, message: error instanceof Error ? error.message : "Meta verification failed." };
