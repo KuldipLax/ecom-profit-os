@@ -134,5 +134,3 @@ The platform bootstrap supports these admin emails by default: `info@bb24.in` an
 Admins can create client businesses from `/admin` with a login email and either provide a temporary password or let the server generate one. The password is returned once to the authenticated admin and is not written to `audit_logs`. Admins can also reset the active client login password from the client support view.
 
 Supabase's admin user management APIs are server-only and require the secret/service key; never put that key in browser code.
-
-<!-- deployment diagnostic: trigger CI/Vercel verification -->
