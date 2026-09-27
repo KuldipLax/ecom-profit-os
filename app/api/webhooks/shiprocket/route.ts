@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { env } from "@/lib/env";
@@ -12,7 +13,7 @@ export async function POST(req: NextRequest) {
   let payload: any;
   try { payload = JSON.parse(raw); } catch { return NextResponse.json({ error: "Invalid webhook payload." }, { status: 400 }); }
 
-  const eventId = String(req.headers.get("x-event-id") ?? payload?.event_id ?? payload?.awb ?? payload?.shipment_id ?? crypto.randomUUID());
+  const eventId = String(req.headers.get("x-event-id") ?? payload?.event_id ?? payload?.awb ?? payload?.shipment_id ?? randomUUID());
   const s = createAdminClient();
   let link: any = null;
   if (payload?.shipment_id != null) {
