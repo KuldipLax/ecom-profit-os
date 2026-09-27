@@ -95,7 +95,7 @@ For a ₹1,000 delivered prepaid order with ₹100 shipping:
 1. Install Node.js 22+ and npm.
 2. Create a Supabase project.
 3. Copy `.env.example` to `.env.local` and fill the secrets.
-4. Apply `supabase/migrations/0001_initial.sql` and `0002_hardening.sql` in order.
+4. Apply `supabase/migrations/0001_initial.sql`, `0002_hardening.sql`, and `0003_security_hardening.sql` in order. Do not stop at 0002 — it temporarily widens `user_can_access_business`/`user_can_write_business` to any active `admin`-role member across every business (needed to avoid a recursive RLS check), and 0003 is what re-scopes those functions back to the target business. Skipping 0003 leaves cross-tenant read/write access for admin-role members.
 5. Configure Supabase Auth email settings and redirect URLs.
 6. Run `npm install`.
 7. Run `npm run dev`.
