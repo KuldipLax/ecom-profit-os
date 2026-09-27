@@ -64,10 +64,6 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient();
 
-    if (shippingProviders.includes(provider) || checkoutProviders.includes(provider) || provider === "shopify") {
-      if (!credentials.webhookSecret) throw new Error("Webhook secret is required for manual connections. Generate one and use the same value in the provider webhook settings.");
-    }
-
     if (shippingProviders.includes(provider)) {
       await supabase
         .from("integrations")
