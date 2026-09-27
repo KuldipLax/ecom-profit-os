@@ -1,2 +1,22 @@
-import { getMemberships } from "@/lib/auth/require-user";import { getCurrentUser } from "@/lib/auth/require-user";import { Store, Bell } from "lucide-react";
-export async function Topbar({businessName}:{businessName?:string}){const [m,u]=await Promise.all([getMemberships(),getCurrentUser()]);const initials=(u?.email??"EP").slice(0,2).toUpperCase();return <header className="topbar"><button className="mobile-menu" aria-label="Open navigation" type="button"><span className="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span></button><div className="search-box"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><input aria-label="Global search" placeholder="Search orders, products, campaigns"/><span className="kbd">⌘ K</span></div><div className="top-spacer"/><button className="top-btn store" type="button"><Store size={16} strokeWidth={1.6}/><span>{businessName??(m[0]?.businesses as any)?.name??"Store"}</span><span>⌄</span></button><button className="top-icon-btn" type="button" aria-label="Notifications"><Bell size={16} strokeWidth={1.6}/></button><div className="profile-chip"><span className="avatar">{initials}</span></div></header>}
+"use client";
+
+import { Bell, Search, Store } from "lucide-react";
+
+export function Topbar({ businessName }: { businessName?: string }) {
+  return (
+    <header className="topbar">
+      <button className="mobile-menu" aria-label="Open navigation" type="button" onClick={() => window.dispatchEvent(new Event("ecom-toggle-sidebar"))}>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <div className="search-box">
+        <Search size={15} strokeWidth={1.7} />
+        <input aria-label="Global search" placeholder="Search orders, products, campaigns" />
+        <span className="kbd">⌘ K</span>
+      </div>
+      <div className="top-spacer" />
+      <button className="top-btn store" type="button"><Store size={16} strokeWidth={1.6} /><span>{businessName ?? "Store"}</span><span>⌄</span></button>
+      <button className="top-icon-btn" type="button" aria-label="Notifications"><Bell size={16} strokeWidth={1.6} /></button>
+      <div className="profile-chip"><span className="avatar">EP</span></div>
+    </header>
+  );
+}
