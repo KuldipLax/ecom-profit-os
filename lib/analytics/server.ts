@@ -156,12 +156,14 @@ export async function getShippingIntelligence(businessId: string, start: string,
     costPerOrder: row.orders.size ? row.practicalShippingCost / row.orders.size : 0,
   }));
 
-  const practicalShippingCost = [...byOrderAndCourier.values()].reduce((sum, row) => sum + Math.max(row.freight, row.unbilled), 0);
+  // The canonical P&L engine aggregates shipment rows to the order before
+  // applying MAX(freight, unbilled). Reuse that result for the report total
+  // so this intelligence view cannot disagree with the Profit page.
   return {
     rows,
     totalFreight: [...byOrderAndCourier.values()].reduce((sum, row) => sum + row.freight, 0),
     unbilled: [...byOrderAndCourier.values()].reduce((sum, row) => sum + row.unbilled, 0),
-    practicalShippingCost,
+    practicalShippingCost: raw.result.shipping,
     totalForwardShipping: [...byOrderAndCourier.values()].reduce((sum, row) => sum + row.forward, 0),
     totalRtoShipping: [...byOrderAndCourier.values()].reduce((sum, row) => sum + row.rto, 0),
     totalCodCharges: [...byOrderAndCourier.values()].reduce((sum, row) => sum + row.cod, 0),
@@ -175,11 +177,14 @@ export async function getRtoIntelligence(businessId: string, start: string, end:
   const totalsBy = (selector: (order: any) => string[]) => {
     const map = new Map<string, { total: number; rto: number; value: number }>();
     for (const order of raw.orders) {
-      for (const dimension of selector(order)) {
+      for (const dimension of new Set(selector(order).filter(Boolean))) {
         const label = dimension || "Unknown";
         const row = map.get(label) ?? { total: 0, rto: 0, value: 0 };
         row.total += 1;
-        if (rtoStatus(order.status)) { row.rto += 1; row.value += Number(order.gross_sale ?? 0); }
+        if (rtoStatus(order.status)) {
+          row.rto += 1;
+          row.value += Number(order.gross_sale ?? 0);
+        }
         map.set(label, row);
       }
     }
@@ -214,10 +219,13 @@ export async function getCohorts(businessId: string, start: string, end: string,
   for (const order of raw.orders) {
     const cohort = new Date(order.pickup_date ?? order.order_date).toISOString().slice(0, 10);
     const economics = raw.economicsByOrder.get(order.id);
-    const row = map.get(cohort) ?? { cohort, orders: 0, revenue: 0, delivered: 0, rto: 0, profit: 0, marketingCost: 0, shipping: 0, cogs: 0 };
+    const row = map.get(cohort) ?? { cohort, orders: 0, revenue: 0, delivered: 0, rto: 0, profit: 0, marketingCost: 0, shipping: 0, cogs: 0, deliveredRevenue: 0 };
     row.orders += 1;
     row.revenue += Number(order.gross_sale ?? 0);
-    if (economics?.effectiveDelivered) row.delivered += 1;
+    if (economics?.effectiveDelivered) {
+      row.delivered += 1;
+      row.deliveredRevenue += economics.deliveredRevenue;
+    }
     if (economics?.effectiveStatus === "RTO") row.rto += 1;
     row.profit += economics?.contributionBeforeMarketing ?? 0;
     row.shipping += economics?.shipping ?? 0;
@@ -225,14 +233,18 @@ export async function getCohorts(businessId: string, start: string, end: string,
     map.set(cohort, row);
   }
   for (const row of map.values()) {
-    const cohortDeliveredRevenue = raw.orders.filter((order: any) => new Date(order.pickup_date ?? order.order_date).toISOString().slice(0, 10) === row.cohort)
-      .reduce((sum: number, order: any) => sum + (raw.economicsByOrder.get(order.id)?.deliveredRevenue ?? 0), 0);
-    row.marketingCost = raw.result.deliveredRevenue ? raw.metaEffectiveMarketingCost * cohortDeliveredRevenue / raw.result.deliveredRevenue : 0;
+    row.marketingCost = raw.result.deliveredRevenue
+      ? raw.metaEffectiveMarketingCost * row.deliveredRevenue / raw.result.deliveredRevenue
+      : 0;
     row.profit -= row.marketingCost;
   }
   return [...map.values()]
     .sort((a, b) => b.cohort.localeCompare(a.cohort))
-    .map((row) => ({ ...row, deliveryRate: row.orders ? row.delivered / row.orders : 0, rtoRate: row.orders ? row.rto / row.orders : 0 }));
+     .map(({ deliveredRevenue: _deliveredRevenue, ...row }) => ({
+      ...row,
+      deliveryRate: row.orders ? row.delivered / row.orders : 0,
+      rtoRate: row.orders ? row.rto / row.orders : 0,
+    }));
 }
 
 export async function getReconciliationSummary(businessId: string, start: string, end: string) {
