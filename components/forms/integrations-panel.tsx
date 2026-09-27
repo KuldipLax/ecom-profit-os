@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Store, Facebook, Truck, CreditCard, RefreshCw, Unplug, ExternalLink } from "lucide-react";
+import { Store, AtSign, Truck, CreditCard, RefreshCw, Unplug, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -100,7 +100,7 @@ export function IntegrationsPanel({ businessId, integrations }: { businessId: st
 
           <div className="integration-card integration-card-stack">
             <div className="integration-card-top">
-              <IconBox><Facebook size={22} strokeWidth={1.6} /></IconBox>
+              <IconBox><AtSign size={22} strokeWidth={1.6} /></IconBox>
               <div className="integration-copy"><strong>Meta Ads</strong><span>Account, campaign, ad set, ad and spend data</span></div>
               <span className={"integration-status " + (get("meta")?.status === "connected" ? "" : "off")}>{get("meta")?.status ?? "Not connected"}</span>
             </div>
@@ -109,7 +109,7 @@ export function IntegrationsPanel({ businessId, integrations }: { businessId: st
               <Button variant="secondary" size="sm" onClick={() => run("meta-sync", "/api/integrations/meta/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ businessId }) })} disabled={!!busy || get("meta")?.status !== "connected"}>
                 <RefreshCw size={12} /> {busy === "meta-sync" ? "Syncing…" : "Sync Now"}
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => run("meta-disconnect", "/api/integrations/disconnect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ businessId, provider: "meta" }) })} disabled={!!busy}>
+              <Button variant="ghost" size="sm" onClick={() => run("meta-disconnect", "/api/integrations/disconnect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ businessId, provider: "meta" })} )} disabled={!!busy}>
                 <Unplug size={12} /> Disconnect
               </Button>
             </div>
