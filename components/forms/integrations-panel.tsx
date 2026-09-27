@@ -296,7 +296,7 @@ export function IntegrationsPanel({ businessId, integrations, appUrl, oauthAvail
                     <div className="integration-field"><label>Store domain</label><Input value={shop} onChange={(e) => setShop(e.target.value.trim())} placeholder="your-store.myshopify.com" /></div>
                     {!oauthAvailable.shopify && <div className="integration-warning">Automatic Shopify Connect is not enabled on this deployment yet. Platform Shopify Client ID/Secret must be configured by the platform admin. Manual API setup below does not need those deployment secrets.</div>}
                     <div className="integration-actions">
-                      <a className={`primary-btn ${!oauthAvailable.shopify || !shop ? "integration-disabled" : ""}`} href={oauthAvailable.shopify && shop ? `/api/integrations/shopify/start?businessId=${businessId}&shop=${encodeURIComponent(shop)}` : "#"} aria-disabled={!oauthAvailable.shopify || !shop} onClick={(e) => { if (!oauthAvailable.shopify || !shop) e.preventDefault(); }}>Connect Shopify <ExternalLink size={12} /></a>
+                      <a className={`primary-btn ${shopifySaved ? "integration-save-button-saved" : ""} ${!oauthAvailable.shopify || !shop || shopifySaved ? "integration-disabled" : ""}`} href={oauthAvailable.shopify && shop && !shopifySaved ? `/api/integrations/shopify/start?businessId=${businessId}&shop=${encodeURIComponent(shop)}` : "#"} aria-disabled={!oauthAvailable.shopify || !shop || shopifySaved} onClick={(e) => { if (!oauthAvailable.shopify || !shop || shopifySaved) e.preventDefault(); }}>{shopifySaved ? <><Check size={12} /> Saved</> : <>Connect Shopify <ExternalLink size={12} /></>}</a>
                       <Button variant="ghost" size="sm" onClick={() => setShopifyMode("manual")}>Use manual instead</Button>
                     </div>
                     <div className="integration-help-list">
@@ -514,7 +514,7 @@ export function IntegrationsPanel({ businessId, integrations, appUrl, oauthAvail
                     <ShieldCheck size={12} /> {busy === `test:${checkoutProvider}` ? "Testing…" : "Test Connection"}
                   </Button>
                   <Button size="sm" className={saved.checkout ? "integration-save-button-saved" : ""} onClick={() => saveManual("checkout", checkoutProvider, { ...checkoutCredentials, webhookSecret: checkoutWebhookSecret })} disabled={!!busy || checkoutSaved || !Object.values(checkoutCredentials).some(Boolean)}>
-                    <Check size={12} /> {saved.checkout || checkoutSaved ? "Saved" : busy === `save:${checkoutProvider` ? "Saving…" : "Save & Connect"}
+                    <Check size={12} /> {saved.checkout || checkoutSaved ? "Saved" : busy === `save:${checkoutProvider}` ? "Saving…" : "Save & Connect"}
                   </Button>
                 </div>
                 <div className="integration-footer">
