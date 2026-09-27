@@ -91,9 +91,6 @@ export async function getRawForAnalytics(
     (products ?? []).map((p: any) => [p.id, p.product_type ?? ""]),
   );
 
-  // Order-facing filters must be applied before building the canonical
-  // profitability input; otherwise filtered analytics silently calculate
-  // against the full tenant period.
   const filteredOrders = (orders ?? []).filter((order: any) => matchesOrder(order, filters));
   const inputs = filteredOrders.map((order: any) => buildProfitInput(order, cr, cat));
 
@@ -111,6 +108,7 @@ export async function getRawForAnalytics(
 
   const settings = normalizeSettings(biz.data.settings);
   const result = calculatePeriodProfit(inputs, settings, metaSpend);
+  const metaGstRate = Number(settings.metaGstRate);
 
   return {
     business: biz.data,
@@ -124,7 +122,7 @@ export async function getRawForAnalytics(
     products,
     result,
     metaSpend,
-    metaGstRate: settings.metaGstRate,
+    metaGstRate,
     metaEffectiveMarketingCost: result.effectiveMarketingCost,
   };
 }
