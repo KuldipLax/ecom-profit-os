@@ -48,6 +48,10 @@ export function AuthForm({ mode }: { mode: "login" | "admin-login" | "signup" | 
     try {
       if (mode === "login" || mode === "admin-login") {
         await postJson("/api/auth/login", { email, password });
+        const session = await postJson("/api/auth/session", {}, 10000);
+        if (session.authenticated !== true) {
+          throw new Error("Login succeeded but the session cookie was not retained. Check the deployment auth configuration.");
+        }
         const requestedNext = new URLSearchParams(window.location.search).get("next");
         const next =
           requestedNext && requestedNext.startsWith("/") && !requestedNext.startsWith("//")
