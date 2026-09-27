@@ -4,11 +4,11 @@ import path from "node:path";
 
 function appApiPathFromUrl(url: string) {
   const normalized = url
-    .replace(/\$\{[^}]+\}/g, "[param]")
+    .replace(/\$\{([a-zA-Z0-9_]+)\}/g, "[$1]")
     .split("?")[0]
     .replace(/\/$/, "");
   const parts = normalized.split("/").filter(Boolean).slice(1);
-  const routeParts = parts.map((part) => part === "[param]" ? "[businessId]" : part);
+  const routeParts = parts;
   return path.join(process.cwd(), "app", "api", ...routeParts, "route.ts");
 }
 
